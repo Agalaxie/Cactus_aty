@@ -1,4 +1,24 @@
+# Atypic Cactus - E-commerce Site
+
+Refonte du site e-commerce Atypic Cactus - Boutique en ligne spécialisée dans la vente de cactus.
+
+## Features
+
+- 🌵 Catalogue de cactus avec filtres par espèce
+- 🛒 Système de panier complet avec persistance localStorage
+- 📦 Calcul automatique des frais de port (gratuit > 200€)
+- 📱 Interface responsive et moderne
+- 🎨 Design épuré avec animations CSS
+
+## Tech Stack
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+- **Framework**: Next.js 14 (App Router)
+- **Styling**: CSS Modules + Tailwind CSS
+- **State Management**: React Context API
+- **Storage**: localStorage pour la persistance du panier
+- **Deployment**: Optimisé pour Vercel
 
 ## Getting Started
 
@@ -16,18 +36,35 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/
+│   ├── api/checkout/          # API endpoint pour commandes
+│   ├── produit/               # Pages produits
+│   │   ├── cereus/
+│   │   ├── echinocactus/
+│   │   └── opuntia/
+│   └── commande/              # Page de commande
+├── components/
+│   └── CartContext.tsx        # Context global du panier
+└── styles/                    # Styles CSS modules
+```
 
-## Learn More
+## Features Details
 
-To learn more about Next.js, take a look at the following resources:
+### Cart System
+- Add/remove products with quantity management
+- Real-time total calculation
+- Automatic shipping calculation
+- Persistent across browser sessions
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Product Pages
+- Detailed product information
+- Image galleries
+- Size/price variants
+- Integrated cart functionality
 
 ## Deploy on Vercel
 
