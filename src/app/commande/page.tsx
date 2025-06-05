@@ -1,9 +1,7 @@
 'use client';
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import Image from "next/image";
-import { useSearchParams } from "next/navigation";
 import Header from "../../components/Header";
 import { useCart } from "../../components/CartContext";
 
@@ -36,7 +34,6 @@ const VILLES_FRANCAISES = [
 ];
 
 export default function CommandePage() {
-  const searchParams = useSearchParams();
   const { items, getTotalPrice, getTotalShipping, getFinalTotal, removeFromCart, updateQuantity } = useCart();
   
   const [formData, setFormData] = useState<FormData>({
@@ -190,7 +187,7 @@ export default function CommandePage() {
       // Redirection vers page de confirmation
       alert('Commande validée ! Vous allez recevoir un email de confirmation.');
       
-    } catch (error) {
+    } catch {
       alert('Erreur lors de la validation de la commande');
     } finally {
       setIsSubmitting(false);
