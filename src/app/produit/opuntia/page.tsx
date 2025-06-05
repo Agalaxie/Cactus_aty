@@ -320,9 +320,7 @@ export default function OpuntiaProduct() {
         </div>
       </main>
 
-      <footer className="py-8 text-center text-[var(--foreground)] text-sm border-t border-[var(--border)] bg-[var(--background)]">
-        © {new Date().getFullYear()} Atypic Cactus. Site inspiré par Stripe. Illustrations temporaires.
-      </footer>
+
     </div>
   );
 } 

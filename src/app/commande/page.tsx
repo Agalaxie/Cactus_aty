@@ -195,7 +195,7 @@ export default function CommandePage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--background)] text-[var(--foreground)]">
+    <div className="bg-[var(--background)] text-[var(--foreground)]">
       <Header />
 
       {/* Breadcrumb */}

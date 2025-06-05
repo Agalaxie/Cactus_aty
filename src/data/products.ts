@@ -1,6 +1,6 @@
 // Base de données des produits Atypic Cactus
-// Import des produits réels depuis WooCommerce
-import { importedProducts } from './imported-products';
+// Import des produits réels depuis WooCommerce avec images mises à jour
+import { enhancedProducts as importedProducts } from './imported-products-enhanced';
 
 export interface Product {
   id: string;
