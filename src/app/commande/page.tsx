@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import DarkModeSwitch from "../../components/DarkModeSwitch";
+import Header from "../../components/Header";
 import { useCart } from "../../components/CartContext";
 
 interface FormData {
@@ -19,6 +19,22 @@ interface FormData {
   commentaires: string;
 }
 
+// Villes françaises populaires pour l'autocomplète
+const VILLES_FRANCAISES = [
+  'Paris', 'Marseille', 'Lyon', 'Toulouse', 'Nice', 'Nantes', 'Strasbourg', 'Montpellier',
+  'Bordeaux', 'Lille', 'Rennes', 'Reims', 'Saint-Étienne', 'Toulon', 'Le Havre', 'Grenoble',
+  'Dijon', 'Angers', 'Nîmes', 'Villeurbanne', 'Saint-Denis', 'Le Mans', 'Aix-en-Provence',
+  'Clermont-Ferrand', 'Brest', 'Limoges', 'Tours', 'Amiens', 'Perpignan', 'Metz', 'Besançon',
+  'Orléans', 'Caen', 'Mulhouse', 'Rouen', 'Nancy', 'Argenteuil', 'Saint-Paul', 'Montreuil',
+  'Avignon', 'La Rochelle', 'Versailles', 'Poitiers', 'Courbevoie', 'Dunkerque', 'Pau',
+  'Vitry-sur-Seine', 'Asnieres-sur-Seine', 'Colombes', 'Aulnay-sous-Bois', 'Rueil-Malmaison',
+  'Antibes', 'Saint-Maur-des-Fossés', 'Champigny-sur-Marne', 'La Seyne-sur-Mer', 'Cannes',
+  'Créteil', 'Boulogne-Billancourt', 'Calais', 'Bourges', 'Saint-Nazaire', 'Valence',
+  'Ajaccio', 'Issy-les-Moulineaux', 'Levallois-Perret', 'Noisy-le-Grand', 'Quimper',
+  'Villejuif', 'Neuilly-sur-Seine', 'Troyes', 'Antony', 'Pessac', 'Ivry-sur-Seine',
+  'Clichy', 'Chambéry', 'Montauban', 'Lorient', 'Sarcelles', 'Meaux', 'Niort', 'Cholet'
+];
+
 export default function CommandePage() {
   const searchParams = useSearchParams();
   const { items, getTotalPrice, getTotalShipping, getFinalTotal, removeFromCart, updateQuantity } = useCart();
@@ -28,7 +44,7 @@ export default function CommandePage() {
     prenom: '',
     nom: '',
     email: '',
-    telephone: '',
+    telephone: '+33 ',
     
     // Adresse de livraison
     adresse: '',
@@ -42,9 +58,76 @@ export default function CommandePage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [villeSuggestions, setVilleSuggestions] = useState<string[]>([]);
+  const [showVilleSuggestions, setShowVilleSuggestions] = useState(false);
+
+  // Auto-complétion des villes
+  const handleVilleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData(prev => ({ ...prev, ville: value }));
+    
+    if (value.length >= 2) {
+      const suggestions = VILLES_FRANCAISES.filter(ville =>
+        ville.toLowerCase().includes(value.toLowerCase())
+      ).slice(0, 5);
+      setVilleSuggestions(suggestions);
+      setShowVilleSuggestions(true);
+    } else {
+      setShowVilleSuggestions(false);
+    }
+  };
+
+  const selectVille = (ville: string) => {
+    setFormData(prev => ({ ...prev, ville }));
+    setShowVilleSuggestions(false);
+    setVilleSuggestions([]);
+  };
+
+  // Formatage du numéro de téléphone français
+  const formatPhoneNumber = (value: string) => {
+    // Supprimer tous les caractères non numériques sauf le +
+    const cleanValue = value.replace(/[^\d+]/g, '');
+    
+    // Si on commence par +33, on garde
+    if (cleanValue.startsWith('+33')) {
+      const numbers = cleanValue.slice(3);
+      if (numbers.length <= 9) {
+        // Formater avec des espaces tous les 2 chiffres
+        const formatted = numbers.replace(/(\d{1})(\d{2})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4 $5');
+        return '+33 ' + formatted.trim();
+      }
+    }
+    
+    // Si on commence par 0, on convertit en +33
+    if (cleanValue.startsWith('0')) {
+      const numbers = cleanValue.slice(1);
+      if (numbers.length <= 9) {
+        const formatted = numbers.replace(/(\d{1})(\d{2})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4 $5');
+        return '+33 ' + formatted.trim();
+      }
+    }
+    
+    return value;
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhoneNumber(e.target.value);
+    setFormData(prev => ({ ...prev, telephone: formatted }));
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    
+    if (name === 'telephone') {
+      handlePhoneChange(e as React.ChangeEvent<HTMLInputElement>);
+      return;
+    }
+    
+    if (name === 'ville') {
+      handleVilleChange(e as React.ChangeEvent<HTMLInputElement>);
+      return;
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -66,7 +149,7 @@ export default function CommandePage() {
     if (!formData.prenom.trim()) newErrors.prenom = 'Le prénom est requis';
     if (!formData.nom.trim()) newErrors.nom = 'Le nom est requis';
     if (!formData.email.trim()) newErrors.email = 'L\'email est requis';
-    if (!formData.telephone.trim()) newErrors.telephone = 'Le téléphone est requis';
+    if (!formData.telephone.trim() || formData.telephone === '+33 ') newErrors.telephone = 'Le téléphone est requis';
     if (!formData.adresse.trim()) newErrors.adresse = 'L\'adresse est requise';
     if (!formData.ville.trim()) newErrors.ville = 'La ville est requise';
     if (!formData.codePostal.trim()) newErrors.codePostal = 'Le code postal est requis';
@@ -81,6 +164,12 @@ export default function CommandePage() {
     const cpRegex = /^[0-9]{5}$/;
     if (formData.codePostal && !cpRegex.test(formData.codePostal)) {
       newErrors.codePostal = 'Le code postal doit contenir 5 chiffres';
+    }
+    
+    // Validation téléphone français
+    const phoneRegex = /^\+33\s[1-9](\s\d{2}){4}$/;
+    if (formData.telephone && !phoneRegex.test(formData.telephone)) {
+      newErrors.telephone = 'Format de téléphone invalide (ex: +33 6 12 34 56 78)';
     }
     
     setErrors(newErrors);
@@ -110,24 +199,7 @@ export default function CommandePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--background)] text-[var(--foreground)]">
-      {/* Header */}
-      <header className="w-full bg-[var(--background)] text-[var(--card-title)] flex items-center py-3 shadow-sm border-b border-[var(--border)] text-sm">
-        <div className="max-w-6xl mx-auto w-full flex items-center justify-between px-4">
-          <Link href="/" className="hover:opacity-80 transition-opacity">
-            <Image
-              src="/logo.png"
-              alt="Atypic Cactus"
-              width={120}
-              height={40}
-              className="h-8 w-auto"
-            />
-          </Link>
-          <div className="flex items-center">
-            <span className="hidden sm:block font-medium">Commande sécurisée</span>
-            <DarkModeSwitch />
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Breadcrumb */}
       <div className="py-6 px-4 max-w-6xl mx-auto w-full">
@@ -220,7 +292,9 @@ export default function CommandePage() {
                     
                     <div>
                       <label className="block text-sm font-medium text-[var(--card-title)] mb-2">
-                        Téléphone *
+                        <span className="inline-flex items-center gap-2">
+                          🇫🇷 Téléphone *
+                        </span>
                       </label>
                       <input
                         type="tel"
@@ -230,11 +304,14 @@ export default function CommandePage() {
                         className={`w-full p-3 rounded-xl border bg-[var(--background)] text-[var(--card-title)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] ${
                           errors.telephone ? 'border-red-500' : 'border-[var(--border)]'
                         }`}
-                        placeholder="06 12 34 56 78"
+                        placeholder="+33 6 12 34 56 78"
                       />
                       {errors.telephone && (
                         <p className="text-red-500 text-xs mt-1">{errors.telephone}</p>
                       )}
+                      <p className="text-xs text-[var(--foreground)] opacity-60 mt-1">
+                        Format: +33 6 12 34 56 78
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -242,7 +319,9 @@ export default function CommandePage() {
                 {/* Adresse de livraison */}
                 <div className="bg-[var(--card-bg)] rounded-2xl p-6 border border-[var(--border)]">
                   <h2 className="text-xl font-semibold mb-4 text-[var(--card-title)]">
-                    Adresse de livraison
+                    <span className="inline-flex items-center gap-2">
+                      🇫🇷 Adresse de livraison en France
+                    </span>
                   </h2>
                   
                   <div className="space-y-4">
@@ -265,7 +344,53 @@ export default function CommandePage() {
                       )}
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-4">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="relative">
+                        <label className="block text-sm font-medium text-[var(--card-title)] mb-2">
+                          Ville *
+                        </label>
+                        <input
+                          type="text"
+                          name="ville"
+                          value={formData.ville}
+                          onChange={handleInputChange}
+                          onFocus={() => {
+                            if (formData.ville.length >= 2) {
+                              setShowVilleSuggestions(true);
+                            }
+                          }}
+                          onBlur={() => {
+                            // Délai pour permettre le clic sur une suggestion
+                            setTimeout(() => setShowVilleSuggestions(false), 200);
+                          }}
+                          className={`w-full p-3 rounded-xl border bg-[var(--background)] text-[var(--card-title)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] ${
+                            errors.ville ? 'border-red-500' : 'border-[var(--border)]'
+                          }`}
+                          placeholder="Paris"
+                          autoComplete="off"
+                        />
+                        
+                        {/* Suggestions de villes */}
+                        {showVilleSuggestions && villeSuggestions.length > 0 && (
+                          <div className="absolute z-10 w-full mt-1 bg-[var(--card-bg)] border border-[var(--border)] rounded-xl shadow-lg max-h-40 overflow-y-auto">
+                            {villeSuggestions.map((ville, index) => (
+                              <button
+                                key={index}
+                                type="button"
+                                onClick={() => selectVille(ville)}
+                                className="w-full text-left px-4 py-2 hover:bg-[var(--accent)]/10 transition-colors text-[var(--card-title)] first:rounded-t-xl last:rounded-b-xl"
+                              >
+                                {ville}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {errors.ville && (
+                          <p className="text-red-500 text-xs mt-1">{errors.ville}</p>
+                        )}
+                      </div>
+                      
                       <div>
                         <label className="block text-sm font-medium text-[var(--card-title)] mb-2">
                           Code postal *
@@ -285,164 +410,171 @@ export default function CommandePage() {
                           <p className="text-red-500 text-xs mt-1">{errors.codePostal}</p>
                         )}
                       </div>
-                      
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-[var(--card-title)] mb-2">
-                          Ville *
-                        </label>
-                        <input
-                          type="text"
-                          name="ville"
-                          value={formData.ville}
-                          onChange={handleInputChange}
-                          className={`w-full p-3 rounded-xl border bg-[var(--background)] text-[var(--card-title)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] ${
-                            errors.ville ? 'border-red-500' : 'border-[var(--border)]'
-                          }`}
-                          placeholder="Paris"
-                        />
-                        {errors.ville && (
-                          <p className="text-red-500 text-xs mt-1">{errors.ville}</p>
-                        )}
-                      </div>
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-[var(--card-title)] mb-2">
                         Pays
                       </label>
-                      <select
-                        name="pays"
-                        value={formData.pays}
-                        onChange={handleInputChange}
-                        className="w-full p-3 rounded-xl border border-[var(--border)] bg-[var(--background)] text-[var(--card-title)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-                      >
-                        <option value="France">France</option>
-                        <option value="Belgique">Belgique</option>
-                        <option value="Suisse">Suisse</option>
-                        <option value="Luxembourg">Luxembourg</option>
-                      </select>
+                      <div className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border)] bg-[var(--background)]">
+                        <span className="text-2xl">🇫🇷</span>
+                        <span className="text-[var(--card-title)] font-medium">France</span>
+                        <span className="text-xs text-[var(--foreground)] opacity-60 ml-auto">
+                          Livraison uniquement en France métropolitaine
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Commentaires */}
+                {/* Commentaires optionnels */}
                 <div className="bg-[var(--card-bg)] rounded-2xl p-6 border border-[var(--border)]">
                   <h2 className="text-xl font-semibold mb-4 text-[var(--card-title)]">
-                    Commentaires (optionnel)
+                    Informations complémentaires
                   </h2>
-                  <textarea
-                    name="commentaires"
-                    value={formData.commentaires}
-                    onChange={handleInputChange}
-                    rows={3}
-                    className="w-full p-3 rounded-xl border border-[var(--border)] bg-[var(--background)] text-[var(--card-title)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-                    placeholder="Instructions de livraison, préférences..."
-                  />
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-[var(--card-title)] mb-2">
+                      Commentaires (optionnel)
+                    </label>
+                    <textarea
+                      name="commentaires"
+                      value={formData.commentaires}
+                      onChange={handleInputChange}
+                      rows={4}
+                      className="w-full p-3 rounded-xl border border-[var(--border)] bg-[var(--background)] text-[var(--card-title)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] resize-none"
+                      placeholder="Instructions de livraison, questions particulières..."
+                    />
+                  </div>
                 </div>
+
+                {/* Bouton de validation */}
+                <motion.button
+                  type="submit"
+                  disabled={isSubmitting || items.length === 0}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all ${
+                    isSubmitting || items.length === 0
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-[var(--accent)] text-white hover:shadow-lg'
+                  }`}
+                >
+                  {isSubmitting ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Validation en cours...
+                    </span>
+                  ) : (
+                    'Valider ma commande'
+                  )}
+                </motion.button>
               </form>
             </motion.div>
 
-            {/* Récapitulatif commande */}
+            {/* Récapitulatif de commande */}
             <motion.div
               initial={{ opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.7 }}
-              className="lg:sticky lg:top-4"
+              transition={{ duration: 0.7, delay: 0.2 }}
+              className="lg:sticky lg:top-8 h-fit"
             >
               <div className="bg-[var(--card-bg)] rounded-2xl p-6 border border-[var(--border)]">
-                <h2 className="text-xl font-semibold mb-4 text-[var(--card-title)]">
-                  Récapitulatif de commande ({items.length} article{items.length > 1 ? 's' : ''})
+                <h2 className="text-xl font-semibold mb-6 text-[var(--card-title)]">
+                  Récapitulatif de commande
                 </h2>
-
+                
                 {items.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-[var(--foreground)] opacity-75 mb-4">Votre panier est vide</p>
-                    <Link href="/" className="text-[var(--accent)] hover:underline">
-                      Continuer les achats
+                    <div className="text-4xl mb-4">🛒</div>
+                    <p className="text-[var(--foreground)] mb-4">Votre panier est vide</p>
+                    <Link 
+                      href="/" 
+                      className="inline-block px-6 py-3 bg-[var(--accent)] text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+                    >
+                      Continuer mes achats
                     </Link>
                   </div>
                 ) : (
                   <>
-                    <div className="space-y-3 mb-6 max-h-64 overflow-y-auto">
-                      {items.map((item) => (
-                        <div key={item.id} className="flex items-center gap-3 p-3 bg-[var(--background)] rounded-xl">
-                          <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                            🌵
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-medium text-[var(--card-title)] text-sm truncate">{item.productName}</h3>
-                            <p className="text-xs text-[var(--foreground)] opacity-75">
-                              {item.size}
-                            </p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <button
-                                onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                className="w-6 h-6 rounded bg-[var(--card-bg)] border border-[var(--border)] text-xs hover:bg-[var(--accent)] hover:text-white"
-                              >
-                                -
-                              </button>
-                              <span className="text-xs font-medium w-6 text-center">{item.quantity}</span>
-                              <button
-                                onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                className="w-6 h-6 rounded bg-[var(--card-bg)] border border-[var(--border)] text-xs hover:bg-[var(--accent)] hover:text-white"
-                              >
-                                +
-                              </button>
-                              <button
-                                onClick={() => removeFromCart(item.id)}
-                                className="ml-auto text-red-500 hover:text-red-700 text-xs"
-                              >
-                                ✕
-                              </button>
-                            </div>
-                          </div>
-                          <div className="text-right flex-shrink-0">
-                            <p className="font-medium text-[var(--card-title)] text-sm">{item.totalPrice}€</p>
-                          </div>
-                        </div>
-                      ))}
+                                         {/* Articles */}
+                     <div className="space-y-4 mb-6">
+                       {items.map((item) => (
+                         <div key={item.id} className="flex items-center gap-4 p-4 bg-[var(--background)] rounded-xl">
+                           <div className="w-15 h-15 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                             <span className="text-2xl">🌵</span>
+                           </div>
+                           <div className="flex-1 min-w-0">
+                             <h3 className="font-medium text-[var(--card-title)] text-sm">
+                               {item.productName}
+                             </h3>
+                             <p className="text-xs text-[var(--foreground)] opacity-70">
+                               Taille: {item.size}
+                             </p>
+                             <div className="flex items-center gap-2 mt-2">
+                               <button
+                                 onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                                 className="w-6 h-6 rounded-full bg-[var(--border)] text-[var(--card-title)] text-xs flex items-center justify-center hover:bg-[var(--accent)] hover:text-white transition-colors"
+                               >
+                                 -
+                               </button>
+                               <span className="text-sm font-medium text-[var(--card-title)] w-6 text-center">
+                                 {item.quantity}
+                               </span>
+                               <button
+                                 onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                 className="w-6 h-6 rounded-full bg-[var(--border)] text-[var(--card-title)] text-xs flex items-center justify-center hover:bg-[var(--accent)] hover:text-white transition-colors"
+                               >
+                                 +
+                               </button>
+                             </div>
+                           </div>
+                           <div className="text-right">
+                             <p className="font-semibold text-[var(--card-title)]">
+                               {item.totalPrice}€
+                             </p>
+                             <button
+                               onClick={() => removeFromCart(item.id)}
+                               className="text-red-500 text-xs hover:underline mt-1"
+                             >
+                               Supprimer
+                             </button>
+                           </div>
+                         </div>
+                       ))}
                     </div>
 
-                    <div className="space-y-2 mb-6 border-t border-[var(--border)] pt-4">
+                    {/* Totaux */}
+                    <div className="border-t border-[var(--border)] pt-4 space-y-3">
                       <div className="flex justify-between text-[var(--foreground)]">
                         <span>Sous-total</span>
                         <span>{getTotalPrice()}€</span>
                       </div>
                       <div className="flex justify-between text-[var(--foreground)]">
                         <span>Livraison</span>
-                        <span className={getTotalShipping() === 0 ? "text-green-600 font-medium" : ""}>
-                          {getTotalShipping() === 0 ? "Gratuite 🎉" : `${getTotalShipping()}€`}
-                        </span>
+                        <span>{getTotalShipping()}€</span>
                       </div>
-                      {getTotalShipping() === 0 && getTotalPrice() >= 200 && (
-                        <p className="text-xs text-green-600">
-                          Livraison gratuite car commande ≥ 200€
-                        </p>
-                      )}
-                      {getTotalShipping() > 0 && (
-                        <p className="text-xs text-[var(--accent)]">
-                          Livraison gratuite dès 200€ (encore {200 - getTotalPrice()}€)
-                        </p>
-                      )}
-                      <div className="flex justify-between font-semibold text-[var(--card-title)] border-t border-[var(--border)] pt-2">
-                        <span>Total TTC</span>
+                      <div className="flex justify-between text-lg font-bold text-[var(--card-title)] border-t border-[var(--border)] pt-3">
+                        <span>Total</span>
                         <span>{getFinalTotal()}€</span>
                       </div>
                     </div>
 
-                    <motion.button
-                      onClick={handleSubmit}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      disabled={isSubmitting || items.length === 0}
-                      className="w-full px-8 py-4 bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white rounded-2xl font-semibold shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      {isSubmitting ? "Validation..." : `Valider la commande • ${getFinalTotal()}€`}
-                    </motion.button>
-
-                    <p className="text-xs text-[var(--foreground)] opacity-75 mt-4 text-center">
-                      🔒 Paiement sécurisé • Satisfaction garantie
-                    </p>
+                    {/* Informations de livraison */}
+                    <div className="mt-6 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                      <div className="flex items-start gap-3">
+                        <span className="text-emerald-600 text-xl">🚚</span>
+                        <div>
+                          <h3 className="font-semibold text-emerald-800 dark:text-emerald-200 text-sm">
+                            Livraison 24H
+                          </h3>
+                          <p className="text-emerald-700 dark:text-emerald-300 text-xs mt-1">
+                            Expédition sous 24H par transporteur spécialisé.
+                            Suivi de livraison par SMS et email.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </>
                 )}
               </div>
@@ -450,10 +582,6 @@ export default function CommandePage() {
           </div>
         </div>
       </main>
-
-      <footer className="py-8 text-center text-[var(--foreground)] text-sm border-t border-[var(--border)] bg-[var(--background)]">
-        © {new Date().getFullYear()} Atypic Cactus. Commande sécurisée.
-      </footer>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useState, useMemo } from "react";
-import DarkModeSwitch from "../../../components/DarkModeSwitch";
+import Header from "../../../components/Header";
 import { useCart } from "../../../components/CartContext";
 
 const product = {
@@ -91,26 +91,9 @@ export default function EchinocactusProduct() {
     }, 1000);
   };
 
-  return (
+    return (
     <div className="min-h-screen flex flex-col bg-[var(--background)] text-[var(--foreground)]">
-      {/* Header unifié */}
-      <header className="w-full bg-[var(--background)] text-[var(--card-title)] flex items-center py-3 shadow-sm border-b border-[var(--border)] text-sm">
-        <div className="max-w-6xl mx-auto w-full flex items-center justify-between px-4">
-                      <Link href="/" className="hover:opacity-80 transition-opacity">
-              <Image
-                src="/logo.png"
-                alt="Atypic Cactus"
-                width={120}
-                height={40}
-                className="h-8 w-auto"
-              />
-            </Link>
-          <div className="flex items-center">
-            <span className="hidden sm:block font-medium">Livraison offerte dès 200 €</span>
-            <DarkModeSwitch />
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Breadcrumb */}
       <div className="py-6 px-4 max-w-6xl mx-auto w-full">
