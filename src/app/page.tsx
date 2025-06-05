@@ -6,20 +6,8 @@ import Header from "../components/Header";
 import { products, getProductsByCategory, categories } from "../data/products";
 
 export default function Home() {
-  // Sélection de produits vedettes (premiers de chaque catégorie)
-  const featuredProducts = [
-    getProductsByCategory('cactus')[0],
-    getProductsByCategory('agaves')[0],
-    getProductsByCategory('yuccas')[0]
-  ].filter(Boolean);
-
-  // Sélection pour chaque catégorie (2 produits par catégorie)
-  const cactusProducts = getProductsByCategory('cactus').slice(0, 2);
-  const agaveProducts = getProductsByCategory('agaves').slice(0, 2);
-  const yuccaProducts = getProductsByCategory('yuccas').slice(0, 2);
-  const aloeProducts = getProductsByCategory('aloes').slice(0, 2);
-  const boutures = getProductsByCategory('boutures').slice(0, 2);
-  const sujetsExceptionnels = getProductsByCategory('sujets-exceptionnels').slice(0, 2);
+  // Produits en vedette pour la section spécialités
+  const featuredProducts = products.slice(0, 3);
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--background)] text-[var(--foreground)]">
