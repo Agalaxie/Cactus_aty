@@ -13,25 +13,21 @@ interface ProductCharacteristics {
   flowering?: boolean;
 }
 
-interface ProductSize {
-  id: string;
-  label: string;
-  multiplier: number;
+interface ProductVariant {
+  height: string; // ex: "30cm", "40cm", "50cm"
+  price: number;
   stock: number;
 }
 
 interface Product {
-  id: string;
+  id: number;
   name: string;
-  latin?: string;
   description: string;
-  basePrice: number;
-  images: string[];
+  price: number; // Prix de base
+  stock_quantity: number;
   category: string;
-  inStock: boolean;
-  featured: boolean;
-  sizes: ProductSize[];
-  characteristics?: ProductCharacteristics;
+  image_url?: string;
+  variants?: ProductVariant[]; // Tailles multiples avec prix différents
 }
 
 interface ProductCardProps {
@@ -67,6 +63,31 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
     return getPlaceholderImage();
   };
 
+  // Fonction pour obtenir le prix d'affichage
+  const getDisplayPrice = () => {
+    if (product.variants && product.variants.length > 0) {
+      const minPrice = Math.min(...product.variants.map(v => v.price));
+      const maxPrice = Math.max(...product.variants.map(v => v.price));
+      if (minPrice === maxPrice) {
+        return `${minPrice.toFixed(2)}€`;
+      }
+      return `À partir de ${minPrice.toFixed(2)}€`;
+    }
+    return `${product.price.toFixed(2)}€`;
+  };
+
+  // Fonction pour créer le slug SEO du produit
+  const createSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -74,12 +95,12 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
       transition={{ delay: index * 0.1, duration: 0.6 }}
       className="group"
     >
-      <Link href={`/produit/${product.id}`}>
+      <Link href={`/produit/${createSlug(product.name)}`}>
         <div className="bg-[var(--card-bg)] rounded-2xl overflow-hidden border border-[var(--border)] hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
           {/* Image */}
           <div className="relative aspect-square overflow-hidden">
             <Image
-              src={getValidImageUrl(product.images[0])}
+              src={getValidImageUrl(product.image_url)}
               alt={product.name}
               fill
               className="object-cover group-hover:scale-110 transition-transform duration-500"
@@ -88,12 +109,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
                 target.src = getPlaceholderImage();
               }}
             />
-            {product.featured && (
-              <div className="absolute top-3 left-3 bg-[var(--accent)] text-white px-2 py-1 rounded-full text-xs font-medium">
-                ⭐ Populaire
-              </div>
-            )}
-            {!product.inStock && (
+            {product.stock_quantity === 0 && (
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                 <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium">
                   Rupture de stock
@@ -107,41 +123,21 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
             <h3 className="font-bold text-lg text-[var(--card-title)] mb-1 group-hover:text-[var(--accent)] transition-colors">
               {product.name}
             </h3>
-            {product.latin && (
-              <p className="text-sm italic text-[var(--foreground)] opacity-75 mb-3">
-                {product.latin}
-              </p>
-            )}
             <p className="text-sm text-[var(--foreground)] opacity-75 mb-4 line-clamp-2">
               {product.description.substring(0, 100)}...
             </p>
             
-            {/* Caractéristiques rapides */}
-            {product.characteristics && (
+            {/* Tailles disponibles */}
+            {product.variants && product.variants.length > 0 && (
               <div className="flex flex-wrap gap-1 mb-3">
-                {product.characteristics.matureSize && (
-                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                    {product.characteristics.matureSize}
+                {product.variants.slice(0, 3).map((variant, idx) => (
+                  <span key={idx} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                    {variant.height}
                   </span>
-                )}
-                {product.characteristics.careLevel && (
-                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                    {product.characteristics.careLevel}
-                  </span>
-                )}
-                {product.characteristics.coldResistance && product.characteristics.coldResistance <= -5 && (
-                  <span className="text-xs bg-cyan-100 text-cyan-800 px-2 py-1 rounded-full">
-                    ❄️ résistant
-                  </span>
-                )}
-                {product.characteristics.flowering && (
-                  <span className="text-xs bg-pink-100 text-pink-800 px-2 py-1 rounded-full">
-                    🌸 fleurit
-                  </span>
-                )}
-                {product.characteristics.indoorSuitable && (
-                  <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
-                    🏠 intérieur
+                ))}
+                {product.variants.length > 3 && (
+                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                    +{product.variants.length - 3} tailles
                   </span>
                 )}
               </div>
@@ -149,7 +145,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
             
             <div className="flex items-center justify-between">
               <span className="text-xl font-bold text-[var(--accent)]">
-                {product.basePrice > 0 ? `${product.basePrice}€` : 'Sur demande'}
+                {getDisplayPrice()}
               </span>
               <span className="text-sm text-[var(--foreground)] opacity-50 capitalize">
                 {product.category}
