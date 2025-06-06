@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import { useCart } from '@/contexts/CartContext';
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('session_id');
   const { clearCart } = useCart();
@@ -200,11 +200,39 @@ export default function PaymentSuccessPage() {
             Continuer mes achats
           </Link>
           
-          <div className="text-[var(--foreground)] opacity-75">
-            <p>Une question ? Contactez-nous à support@cactus-shop.fr</p>
+          <div>
+            <Link
+              href="/espace-client"
+              className="text-[var(--accent)] hover:underline"
+            >
+              Voir mes commandes
+            </Link>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+// Composant de fallback pour le Suspense
+function LoadingSkeleton() {
+  return (
+    <div className="min-h-screen bg-[var(--background)]">
+      <Header />
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--accent)] mx-auto mb-4"></div>
+          <p className="text-[var(--foreground)]">Chargement...</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={<LoadingSkeleton />}>
+      <PaymentSuccessContent />
+    </Suspense>
   );
 } 
