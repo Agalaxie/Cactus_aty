@@ -3,7 +3,8 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Header from "../../components/Header";
-import { useCart } from "../../components/CartContext";
+import { useCart } from "../../contexts/CartContext";
+import { stripePromise } from "../../lib/stripe-client";
 
 interface FormData {
   prenom: string;
@@ -34,7 +35,11 @@ const VILLES_FRANCAISES = [
 ];
 
 export default function CommandePage() {
-  const { items, getTotalPrice, getTotalShipping, getFinalTotal, removeFromCart, updateQuantity } = useCart();
+  const { items, totalPrice, removeItem, updateQuantity } = useCart();
+  
+  // Calculer les frais de livraison (comme dans la page panier)
+  const fraisLivraison = totalPrice >= 200 ? 0 : 15;
+  const totalFinal = totalPrice + fraisLivraison;
   
   const [formData, setFormData] = useState<FormData>({
     // Informations personnelles
@@ -177,18 +182,59 @@ export default function CommandePage() {
     e.preventDefault();
     
     if (!validateForm()) return;
+    if (items.length === 0) {
+      alert('Votre panier est vide');
+      return;
+    }
     
     setIsSubmitting(true);
     
     try {
-      // Simuler l'envoi de la commande
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Créer une session de paiement Stripe avec les infos client
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          items: items,
+          customerEmail: formData.email,
+          customerInfo: {
+            name: `${formData.prenom} ${formData.nom}`,
+            email: formData.email,
+            phone: formData.telephone,
+            address: {
+              line1: formData.adresse,
+              city: formData.ville,
+              postal_code: formData.codePostal,
+              country: 'FR',
+            }
+          }
+        }),
+      });
+
+      const { sessionId, error } = await response.json();
+
+      if (error) {
+        alert(`Erreur : ${error}`);
+        return;
+      }
+
+      // Rediriger vers Stripe Checkout avec les infos pré-remplies
+      const stripe = await stripePromise;
+      if (stripe) {
+        const { error } = await stripe.redirectToCheckout({
+          sessionId: sessionId,
+        });
+
+        if (error) {
+          alert(`Erreur Stripe : ${error.message}`);
+        }
+      }
       
-      // Redirection vers page de confirmation
-      alert('Commande validée ! Vous allez recevoir un email de confirmation.');
-      
-    } catch {
-      alert('Erreur lors de la validation de la commande');
+    } catch (error) {
+      console.error('Erreur lors du paiement:', error);
+      alert('Erreur lors du traitement du paiement');
     } finally {
       setIsSubmitting(false);
     }
@@ -220,7 +266,7 @@ export default function CommandePage() {
                 Finaliser votre commande
               </h1>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-6" autoComplete="on">
                 {/* Informations personnelles */}
                 <div className="bg-[var(--card-bg)] rounded-2xl p-6 border border-[var(--border)]">
                   <h2 className="text-xl font-semibold mb-4 text-[var(--card-title)]">
@@ -237,6 +283,7 @@ export default function CommandePage() {
                         name="prenom"
                         value={formData.prenom}
                         onChange={handleInputChange}
+                        autoComplete="given-name"
                         className={`w-full p-3 rounded-xl border bg-[var(--background)] text-[var(--card-title)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] ${
                           errors.prenom ? 'border-red-500' : 'border-[var(--border)]'
                         }`}
@@ -256,6 +303,7 @@ export default function CommandePage() {
                         name="nom"
                         value={formData.nom}
                         onChange={handleInputChange}
+                        autoComplete="family-name"
                         className={`w-full p-3 rounded-xl border bg-[var(--background)] text-[var(--card-title)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] ${
                           errors.nom ? 'border-red-500' : 'border-[var(--border)]'
                         }`}
@@ -277,6 +325,7 @@ export default function CommandePage() {
                         name="email"
                         value={formData.email}
                         onChange={handleInputChange}
+                        autoComplete="email"
                         className={`w-full p-3 rounded-xl border bg-[var(--background)] text-[var(--card-title)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] ${
                           errors.email ? 'border-red-500' : 'border-[var(--border)]'
                         }`}
@@ -298,6 +347,7 @@ export default function CommandePage() {
                         name="telephone"
                         value={formData.telephone}
                         onChange={handleInputChange}
+                        autoComplete="tel"
                         className={`w-full p-3 rounded-xl border bg-[var(--background)] text-[var(--card-title)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] ${
                           errors.telephone ? 'border-red-500' : 'border-[var(--border)]'
                         }`}
@@ -331,6 +381,7 @@ export default function CommandePage() {
                         name="adresse"
                         value={formData.adresse}
                         onChange={handleInputChange}
+                        autoComplete="street-address"
                         className={`w-full p-3 rounded-xl border bg-[var(--background)] text-[var(--card-title)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] ${
                           errors.adresse ? 'border-red-500' : 'border-[var(--border)]'
                         }`}
@@ -364,7 +415,7 @@ export default function CommandePage() {
                             errors.ville ? 'border-red-500' : 'border-[var(--border)]'
                           }`}
                           placeholder="Paris"
-                          autoComplete="off"
+                          autoComplete="address-level2"
                         />
                         
                         {/* Suggestions de villes */}
@@ -397,6 +448,7 @@ export default function CommandePage() {
                           name="codePostal"
                           value={formData.codePostal}
                           onChange={handleInputChange}
+                          autoComplete="postal-code"
                           className={`w-full p-3 rounded-xl border bg-[var(--background)] text-[var(--card-title)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] ${
                             errors.codePostal ? 'border-red-500' : 'border-[var(--border)]'
                           }`}
@@ -439,6 +491,7 @@ export default function CommandePage() {
                       value={formData.commentaires}
                       onChange={handleInputChange}
                       rows={4}
+                      autoComplete="off"
                       className="w-full p-3 rounded-xl border border-[var(--border)] bg-[var(--background)] text-[var(--card-title)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] resize-none"
                       placeholder="Instructions de livraison, questions particulières..."
                     />
@@ -460,10 +513,13 @@ export default function CommandePage() {
                   {isSubmitting ? (
                     <span className="flex items-center justify-center gap-2">
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Validation en cours...
+                      Redirection vers le paiement...
                     </span>
                   ) : (
-                    'Valider ma commande'
+                    <>
+                      <span>💳</span>
+                      Valider et payer
+                    </>
                   )}
                 </motion.button>
               </form>
@@ -503,11 +559,13 @@ export default function CommandePage() {
                            </div>
                            <div className="flex-1 min-w-0">
                              <h3 className="font-medium text-[var(--card-title)] text-sm">
-                               {item.productName}
+                               {item.product.name}
                              </h3>
-                             <p className="text-xs text-[var(--foreground)] opacity-70">
-                               Taille: {item.size}
-                             </p>
+                             {item.selectedVariant && (
+                               <p className="text-xs text-[var(--foreground)] opacity-70">
+                                 Taille: {item.selectedVariant.height}
+                               </p>
+                             )}
                              <div className="flex items-center gap-2 mt-2">
                                <button
                                  onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
@@ -528,10 +586,10 @@ export default function CommandePage() {
                            </div>
                            <div className="text-right">
                              <p className="font-semibold text-[var(--card-title)]">
-                               {item.totalPrice}€
+                               {((item.selectedVariant?.price || item.product.price) * item.quantity).toFixed(2)}€
                              </p>
                              <button
-                               onClick={() => removeFromCart(item.id)}
+                               onClick={() => removeItem(item.id)}
                                className="text-red-500 text-xs hover:underline mt-1"
                              >
                                Supprimer
@@ -545,15 +603,15 @@ export default function CommandePage() {
                     <div className="border-t border-[var(--border)] pt-4 space-y-3">
                       <div className="flex justify-between text-[var(--foreground)]">
                         <span>Sous-total</span>
-                        <span>{getTotalPrice()}€</span>
+                        <span>{totalPrice.toFixed(2)}€</span>
                       </div>
                       <div className="flex justify-between text-[var(--foreground)]">
                         <span>Livraison</span>
-                        <span>{getTotalShipping()}€</span>
+                        <span>{fraisLivraison.toFixed(2)}€</span>
                       </div>
                       <div className="flex justify-between text-lg font-bold text-[var(--card-title)] border-t border-[var(--border)] pt-3">
                         <span>Total</span>
-                        <span>{getFinalTotal()}€</span>
+                        <span>{totalFinal.toFixed(2)}€</span>
                       </div>
                     </div>
 

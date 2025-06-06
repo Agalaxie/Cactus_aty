@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@stripe/stripe-js": "^7.3.1",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.10",
@@ -25,7 +26,8 @@
     "next-themes": "^0.4.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "stripe": "^18.2.0"
+    "resend": "^4.5.2",
+    "stripe": "^18.2.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

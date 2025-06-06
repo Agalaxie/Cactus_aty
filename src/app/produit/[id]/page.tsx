@@ -8,6 +8,7 @@ import Header from '../../../components/Header';
 import ProductVariantSelector from '../../../components/ProductVariantSelector';
 import { supabase } from '../../../lib/supabase';
 import { Product, ProductVariant } from '../../../types/product';
+import { useCart } from '../../../contexts/CartContext';
 
 // Fonction pour créer un slug SEO-friendly à partir du nom du produit
 const createSlug = (name: string): string => {
@@ -25,12 +26,14 @@ const createSlug = (name: string): string => {
 export default function ProductPage() {
   const params = useParams();
   const productSlug = params.id as string;
+  const { addItem, isInCart, getCartItemQuantity } = useCart();
   
   const [product, setProduct] = useState<Product | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   useEffect(() => {
     async function fetchProductBySlug() {
@@ -90,17 +93,30 @@ export default function ProductPage() {
     return getCurrentStock() > 0;
   };
 
-  const handleAddToCart = () => {
-    if (!product) return;
+  const handleAddToCart = async () => {
+    if (!product || !isInStock()) return;
     
-    // Ici on ajouterait la logique du panier
-    console.log('Ajout au panier:', {
-      product,
-      selectedVariant,
-      quantity
-    });
+    setIsAddingToCart(true);
     
-    alert(`Ajouté au panier : ${product.name} ${selectedVariant ? `(${selectedVariant.height})` : ''} x${quantity}`);
+    try {
+      // Ajouter au panier avec le contexte
+      addItem(product, selectedVariant || undefined, quantity);
+      
+      // Petit feedback visuel
+      const productName = `${product.name}${selectedVariant ? ` (${selectedVariant.height})` : ''}`;
+      
+      // Réinitialiser la quantité à 1
+      setQuantity(1);
+      
+      // On peut ajouter une notification toast ici plus tard
+      console.log(`✅ Ajouté au panier : ${productName} x${quantity}`);
+      
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout au panier:', error);
+      alert('Erreur lors de l\'ajout au panier. Veuillez réessayer.');
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
   // Fonction pour obtenir une image placeholder
@@ -255,10 +271,26 @@ export default function ProductPage() {
 
               <button
                 onClick={handleAddToCart}
-                disabled={!isInStock() || quantity === 0}
-                className="w-full bg-[var(--accent)] text-white py-4 px-6 rounded-lg text-lg font-bold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!isInStock() || quantity === 0 || isAddingToCart}
+                className="w-full bg-[var(--accent)] text-white py-4 px-6 rounded-lg text-lg font-bold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {!isInStock() ? 'Rupture de stock' : 'Ajouter au panier'}
+                {isAddingToCart ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+                    Ajout en cours...
+                  </>
+                ) : !isInStock() ? (
+                  'Rupture de stock'
+                ) : (
+                  <>
+                    🛒 Ajouter au panier
+                    {product && isInCart(product, selectedVariant || undefined) && (
+                      <span className="bg-white/20 px-2 py-1 rounded text-sm">
+                        Déjà {getCartItemQuantity(product, selectedVariant || undefined)} dans le panier
+                      </span>
+                    )}
+                  </>
+                )}
               </button>
             </div>
 

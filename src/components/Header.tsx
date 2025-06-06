@@ -6,7 +6,8 @@ import Link from 'next/link';
 import DarkModeSwitch from './DarkModeSwitch';
 import MegaMenu from './MegaMenu';
 import SearchBar from './SearchBar';
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
+import { useCart } from '@/contexts/CartContext';
 
 interface HeaderProps {
   showMegaMenu?: boolean;
@@ -16,6 +17,7 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [closeTimeout, setCloseTimeout] = useState<NodeJS.Timeout | null>(null);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
+  const { totalItems } = useCart();
 
   const handleMouseEnter = () => {
     if (closeTimeout) {
@@ -145,6 +147,20 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
               >
                 <MagnifyingGlassIcon className="h-5 w-5" />
               </button>
+
+              {/* Panier */}
+              <Link 
+                href="/panier"
+                className="relative flex items-center justify-center rounded-full p-2 bg-[var(--card-bg)] hover:bg-[var(--accent)] transition-colors text-[var(--card-title)] hover:text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                aria-label={`Panier (${totalItems} article${totalItems > 1 ? 's' : ''})`}
+              >
+                <ShoppingCartIcon className="h-5 w-5" />
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-[var(--accent)] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                    {totalItems > 99 ? '99+' : totalItems}
+                  </span>
+                )}
+              </Link>
 
               <span className="hidden lg:block font-medium">Livraison offerte dès 200 €</span>
               
