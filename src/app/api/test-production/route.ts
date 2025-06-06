@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
       
       // Test simple de validation d'API
       const testEmail = {
-        from: 'Atypic Cactus <noreply@atypic-cactus.fr>',
+        from: 'Atypic Cactus <onboarding@resend.dev>',
         to: process.env.ADMIN_EMAIL || 'test@test.com',
         subject: '🧪 Test de diagnostic - Ne pas traiter',
         html: '<p>Email de test automatique pour vérifier la configuration Resend.</p>'
@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
       diagnostics.tests.resend_config = {
         success: true,
         api_key_present: true,
-        from_domain: 'atypic-cactus.fr',
+        from_domain: 'resend.dev (domaine vérifié)',
         admin_email: process.env.ADMIN_EMAIL
       };
     } else {

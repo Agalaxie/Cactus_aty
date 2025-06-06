@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
 
     // Email client
     const customerEmailData = {
-      from: 'Atypic Cactus <noreply@atypic-cactus.fr>',
+      from: 'Atypic Cactus <onboarding@resend.dev>',
       to: customerEmail,
       subject: `✅ Commande confirmée - ${sessionId}`,
       html: customerEmailTemplate,
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
     // Email admin (si configuré)
     if (adminEmail) {
       const adminEmailData = {
-        from: 'Atypic Cactus <noreply@atypic-cactus.fr>',
+        from: 'Atypic Cactus <onboarding@resend.dev>',
         to: adminEmail,
         subject: `🛒 Nouvelle commande - ${(amount / 100).toFixed(2)}€`,
         html: adminEmailTemplate,
