@@ -9,7 +9,16 @@ const nextConfig: NextConfig = {
     // Ignorer les erreurs TypeScript pendant le build
     ignoreBuildErrors: true,
   },
+  // Optimisations de performance
+  experimental: {
+    optimizePackageImports: ['framer-motion', '@heroicons/react'],
+  },
+  // Compression et optimisations
+  compress: true,
+  swcMinify: true,
+  // Optimisation des images
   images: {
+    formats: ['image/webp', 'image/avif'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -18,6 +27,28 @@ const nextConfig: NextConfig = {
         pathname: '/wp-content/uploads/**',
       },
     ],
+  },
+  // Optimisation du bundling
+  webpack: (config, { dev, isServer }) => {
+    if (!dev && !isServer) {
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all',
+          },
+          framerMotion: {
+            test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
+            name: 'framer-motion',
+            chunks: 'all',
+            priority: 10,
+          },
+        },
+      };
+    }
+    return config;
   },
   /* config options here */
 };

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import Image from 'next/image';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import LazyMotionWrapper, { motion } from './LazyMotion';
 
 interface Product {
   id: number;
@@ -16,8 +16,8 @@ interface Product {
 }
 
 interface ProductListProps {
-  limit?: number; // Nouveau prop pour limiter le nombre de produits
-  category?: string; // Nouveau prop pour filtrer par catégorie
+  limit?: number;
+  category?: string;
 }
 
 export default function ProductList({ limit, category }: ProductListProps) {
@@ -33,12 +33,10 @@ export default function ProductList({ limit, category }: ProductListProps) {
           .select('*')
           .order('id', { ascending: true });
 
-        // Si category est défini, filtrer par catégorie
         if (category) {
           query = query.eq('category', category);
         }
 
-        // Si limit est défini, l'appliquer à la requête
         if (limit) {
           query = query.limit(limit);
         }
@@ -69,25 +67,22 @@ export default function ProductList({ limit, category }: ProductListProps) {
     </div>
   );
 
-  // Fonction pour obtenir une image placeholder SVG valide
   const getPlaceholderImage = () => {
     return "data:image/svg+xml,%3csvg width='400' height='400' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='400' height='400' fill='%23f3f4f6'/%3e%3cg transform='translate(200%2c200)'%3e%3ccircle cx='0' cy='-30' r='25' fill='%2310b981'/%3e%3cpath d='M-5%2c-50 Q0%2c-60 5%2c-50 L3%2c-30 L-3%2c-30 Z' fill='%2310b981'/%3e%3cpath d='M-15%2c-35 Q-20%2c-45 -10%2c-40 L-8%2c-25 L-12%2c-25 Z' fill='%2310b981'/%3e%3cpath d='M15%2c-35 Q20%2c-45 10%2c-40 L12%2c-25 L8%2c-25 Z' fill='%2310b981'/%3e%3cellipse cx='0' cy='20' rx='40' ry='20' fill='%23d97706'/%3e%3c/g%3e%3ctext x='200' y='350' text-anchor='middle' fill='%236b7280' font-family='Arial%2c sans-serif' font-size='16'%3eImage non disponible%3c/text%3e%3c/svg%3e";
   };
 
-  // Fonction pour créer un slug SEO-friendly à partir du nom du produit
   const createSlug = (name: string): string => {
     return name
       .toLowerCase()
       .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '') // Enlever les accents
-      .replace(/[^a-z0-9\s-]/g, '') // Garder seulement lettres, chiffres, espaces et tirets
-      .replace(/\s+/g, '-') // Remplacer espaces par tirets
-      .replace(/-+/g, '-') // Éviter les tirets multiples
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
       .trim()
-      .substring(0, 60); // Limiter la longueur
+      .substring(0, 60);
   };
 
-  // Fonction pour valider et nettoyer l'URL de l'image
   const getValidImageUrl = (imageUrl: string | null | undefined): string => {
     if (!imageUrl || imageUrl.trim() === '') {
       return getPlaceholderImage();
@@ -95,78 +90,80 @@ export default function ProductList({ limit, category }: ProductListProps) {
 
     const cleanUrl = imageUrl.trim();
     
-    // Accepter les URLs locales (/images/...) et les URLs HTTPS
     if (cleanUrl.startsWith('/images/') || cleanUrl.startsWith('https://')) {
       return cleanUrl;
     }
 
-    // Sinon utiliser le placeholder
     return getPlaceholderImage();
   };
 
   return (
-    <motion.div 
-      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.3 }}
-      variants={{
-        hidden: {},
-        visible: { transition: { staggerChildren: 0.2 } }
-      }}
-    >
-      {products.map((product) => (
-        <motion.div
-          key={product.id}
-          whileHover={{ y: -8, scale: 1.02 }}
-          className="bg-[var(--card-bg)] rounded-2xl shadow-lg border border-[var(--border)] overflow-hidden group cursor-pointer"
-          initial={{ opacity: 0, y: 50 }}
-          variants={{ visible: { opacity: 1, y: 0, transition: { duration: 0.7 } } }}
-        >
-          <Link href={`/produit/${createSlug(product.name)}`} className="block">
-            <div className="aspect-square relative overflow-hidden">
-              <Image
-                src={getValidImageUrl(product.image_url)}
-                alt={product.name}
-                width={400}
-                height={400}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                onError={(e) => {
-                  // En cas d'erreur, utiliser l'image placeholder
-                  const target = e.target as HTMLImageElement;
-                  target.src = getPlaceholderImage();
-                }}
-              />
-            </div>
-            <div className="p-6">
-              <span className="text-sm font-medium text-[var(--accent)] uppercase tracking-wide">
-                {product.category}
-              </span>
-              <h3 className="text-xl font-bold mt-2 mb-3 text-[var(--card-title)]">
-                {product.name}
-              </h3>
-              <p className="text-sm text-[var(--foreground)] mb-3 line-clamp-2">
-                {product.description}
-              </p>
-              <div className="flex items-center justify-between">
-                <p className="text-2xl font-bold text-[var(--accent)]">
-                  {product.price}€
-                </p>
-                <button 
-                  className="px-4 py-2 bg-[var(--accent)] text-white rounded-full text-sm font-semibold transition-all hover:shadow-lg focus:ring-2 focus:ring-[var(--accent)] focus:ring-opacity-50"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    // TODO: Ajouter la fonction d'ajout au panier
-                    alert('Fonctionnalité à venir !');
-                  }}
-                >
-                  Ajouter au panier
-                </button>
-              </div>
-            </div>
-          </Link>
-        </motion.div>
-      ))}
-    </motion.div>
+    <LazyMotionWrapper>
+      <div className="py-20 px-4 bg-[var(--background)]">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-[var(--card-title)] mb-4">
+              {category ? `Collection ${category}` : 'Nos Produits'}
+            </h2>
+            <div className="w-24 h-1 bg-[var(--accent)] mx-auto"></div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {products.map((product, index) => (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1, duration: 0.4 }}
+                className="bg-[var(--card-bg)] rounded-2xl shadow-lg border border-[var(--border)] overflow-hidden group cursor-pointer hover:shadow-xl transition-shadow duration-300"
+              >
+                <Link href={`/produit/${createSlug(product.name)}`} className="block">
+                  <div className="aspect-square relative overflow-hidden">
+                    <Image
+                      src={getValidImageUrl(product.image_url)}
+                      alt={product.name}
+                      width={400}
+                      height={400}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                      quality={85}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = getPlaceholderImage();
+                      }}
+                    />
+                  </div>
+                  <div className="p-6">
+                    <span className="text-sm font-medium text-[var(--accent)] uppercase tracking-wide">
+                      {product.category}
+                    </span>
+                    <h3 className="text-xl font-bold mt-2 mb-3 text-[var(--card-title)]">
+                      {product.name}
+                    </h3>
+                    <p className="text-sm text-[var(--foreground)] mb-3 line-clamp-2">
+                      {product.description}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-2xl font-bold text-[var(--accent)]">
+                        {product.price}€
+                      </p>
+                      <button 
+                        className="px-4 py-2 bg-[var(--accent)] text-white rounded-full text-sm font-semibold transition-all hover:shadow-lg focus:ring-2 focus:ring-[var(--accent)] focus:ring-opacity-50"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          alert('Fonctionnalité à venir !');
+                        }}
+                      >
+                        Ajouter au panier
+                      </button>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </LazyMotionWrapper>
   );
 } 
