@@ -290,21 +290,14 @@ function SearchPageContent() {
                 {searchResults.map(product => {
                   // Convertir le produit Supabase vers le format attendu par ProductCard
                   const adaptedProduct = {
-                    id: createSlug(product.name),
+                    id: product.id, // Utiliser l'ID numérique de la base
                     name: product.name,
-                    latin: '',
                     description: product.description,
-                    basePrice: product.price,
-                    images: [product.image_url || '/placeholder-cactus.jpg'],
-                    category: 'cactus',
-                    inStock: product.price > 0,
-                    featured: product.price > 100,
-                    sizes: [{
-                      id: 'standard',
-                      label: 'Standard',
-                      multiplier: 1,
-                      stock: product.price > 0 ? 5 : 0
-                    }]
+                    price: product.price, // ProductCard attend 'price', pas 'basePrice'
+                    stock_quantity: product.price > 0 ? 10 : 0, // Simuler le stock
+                    category: product.category,
+                    image_url: product.image_url || '/placeholder-cactus.jpg', // ProductCard attend 'image_url'
+                    variants: [] // Pas de variants pour la recherche
                   };
 
                   return (

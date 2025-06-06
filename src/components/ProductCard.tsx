@@ -49,13 +49,8 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
 
     const cleanUrl = imageUrl.trim();
     
-    // Si c'est une URL locale (/images/...) ou invalide, utiliser le placeholder
-    if (cleanUrl.startsWith('/images/') || !cleanUrl.startsWith('http')) {
-      return getPlaceholderImage();
-    }
-
-    // Vérifier si c'est une URL HTTPS valide
-    if (cleanUrl.startsWith('https://')) {
+    // Accepter les URLs locales (/images/...) et les URLs HTTPS
+    if (cleanUrl.startsWith('/images/') || cleanUrl.startsWith('https://')) {
       return cleanUrl;
     }
 
