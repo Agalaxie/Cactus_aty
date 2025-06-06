@@ -19,50 +19,60 @@ interface Category {
   description: string;
   image: string;
   count: number;
-  dbCategories: string[]; // Catégories correspondantes dans Supabase
+  dbCategories: string[];
 }
 
-const categoriesConfig: Omit<Category, 'count'>[] = [
+// Fonction pour générer un placeholder SVG par catégorie
+const getCategoryPlaceholder = (categoryName: string) => {
+  const colors = {
+    'Agaves': { bg: '%2316a34a', accent: '%2322c55e' }, // Vert
+    'Aloès': { bg: '%2306b6d4', accent: '%2309e6ff' }, // Cyan
+    'Cactus': { bg: '%23ca8a04', accent: '%23eab308' }, // Jaune
+    'Yuccas': { bg: '%23dc2626', accent: '%23ef4444' }, // Rouge
+    'Dasylirions': { bg: '%237c2d12', accent: '%23ea580c' }, // Orange
+    'Sujets Exceptionnels': { bg: '%237c3aed', accent: '%238b5cf6' } // Violet
+  };
+  
+  const color = colors[categoryName as keyof typeof colors] || colors['Cactus'];
+  
+  return `data:image/svg+xml,%3csvg width='400' height='400' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='400' height='400' fill='${color.bg}'/%3e%3cg transform='translate(200%2c200)'%3e%3ccircle cx='0' cy='-30' r='35' fill='${color.accent}'/%3e%3cpath d='M-8%2c-60 Q0%2c-75 8%2c-60 L5%2c-25 L-5%2c-25 Z' fill='${color.accent}'/%3e%3cpath d='M-25%2c-40 Q-35%2c-55 -15%2c-45 L-12%2c-20 L-18%2c-20 Z' fill='${color.accent}'/%3e%3cpath d='M25%2c-40 Q35%2c-55 15%2c-45 L18%2c-20 L12%2c-20 Z' fill='${color.accent}'/%3e%3cellipse cx='0' cy='30' rx='50' ry='25' fill='%23422006'/%3e%3c/g%3e%3ctext x='200' y='370' text-anchor='middle' fill='white' font-family='Arial%2c sans-serif' font-size='24' font-weight='bold'%3e${categoryName}%3c/text%3e%3c/svg%3e`;
+};
+
+const categoriesConfig: Omit<Category, 'count' | 'image'>[] = [
   {
     name: 'Agaves',
     slug: 'agaves',
     description: 'Agaves spectaculaires pour jardins modernes',
-    image: '/Agave Nigra.jpg',
     dbCategories: ['Agaves', 'Agaves et aloes']
   },
   {
     name: 'Aloès', 
     slug: 'aloes',
     description: 'Aloès thérapeutiques et décoratifs',
-    image: '/Aloe Aristata.jpg',
     dbCategories: ['Aloes', 'Agaves et aloes']
   },
   {
     name: 'Cactus',
     slug: 'cactus',
     description: 'Collection exclusive de cactus majestueux', 
-    image: '/Echinocactus grusonii intermedius.jpg',
     dbCategories: ['Cactus', 'Cereus', 'Echinocactus', 'Mammillaria', 'Opuntia', 'Pachycereus']
   },
   {
     name: 'Yuccas',
     slug: 'yuccas',
     description: 'Yuccas résistants et décoratifs',
-    image: '/cactus-vedette.png', 
     dbCategories: ['Yuccas', 'Rostrata']
   },
   {
     name: 'Dasylirions',
     slug: 'dasylirions',
     description: 'Dasylirions architecturaux',
-    image: '/cactus-hero.png',
     dbCategories: ['Dasylirions']
   },
   {
     name: 'Sujets Exceptionnels',
     slug: 'sujets-exceptionnels',
     description: 'Spécimens rares et collectionneurs',
-    image: '/cactus-hero.png',
     dbCategories: ['Sujets exceptionnels']
   }
 ];
@@ -72,32 +82,59 @@ export default function MegaMenu({ isOpen, onClose, onMouseEnter, onMouseLeave }
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchCategoryCounts() {
+    async function fetchCategoriesWithImages() {
       try {
         setLoading(true);
         
-        // Récupérer les compteurs pour chaque catégorie
-        const categoriesWithCounts = await Promise.all(
+        // Récupérer les compteurs et images pour chaque catégorie
+        const categoriesWithData = await Promise.all(
           categoriesConfig.map(async (categoryConfig) => {
-            const { count, error } = await supabase
+            // Compter les produits
+            const { count, error: countError } = await supabase
               .from('products')
               .select('*', { count: 'exact', head: true })
               .in('category', categoryConfig.dbCategories);
 
-            if (error) {
-              console.error(`Erreur pour la catégorie ${categoryConfig.name}:`, error);
-              return { ...categoryConfig, count: 0 };
+            // Récupérer un produit représentatif avec image
+            const { data: products, error: imageError } = await supabase
+              .from('products')
+              .select('image_url')
+              .in('category', categoryConfig.dbCategories)
+              .not('image_url', 'is', null)
+              .not('image_url', 'eq', '')
+              .limit(1);
+
+            if (countError) {
+              console.error(`Erreur pour la catégorie ${categoryConfig.name}:`, countError);
             }
 
-            return { ...categoryConfig, count: count || 0 };
+            // Utiliser l'image du produit ou le placeholder
+            let categoryImage = getCategoryPlaceholder(categoryConfig.name);
+            
+            if (products && products.length > 0 && products[0].image_url) {
+              const imageUrl = products[0].image_url.trim();
+              if (imageUrl.startsWith('/images/') || imageUrl.startsWith('https://')) {
+                categoryImage = imageUrl;
+              }
+            }
+
+            return { 
+              ...categoryConfig, 
+              count: count || 0,
+              image: categoryImage
+            };
           })
         );
 
-        setCategories(categoriesWithCounts);
+        setCategories(categoriesWithData);
       } catch (error) {
-        console.error('Erreur lors du chargement des compteurs:', error);
-        // En cas d'erreur, utiliser des valeurs par défaut
-        setCategories(categoriesConfig.map(cat => ({ ...cat, count: 0 })));
+        console.error('Erreur lors du chargement des catégories:', error);
+        // En cas d'erreur, utiliser des placeholders
+        setCategories(categoriesConfig.map(cat => ({ 
+          ...cat, 
+          count: 0,
+          image: getCategoryPlaceholder(cat.name)
+        })));
       } finally {
         setLoading(false);
       }
@@ -105,7 +142,7 @@ export default function MegaMenu({ isOpen, onClose, onMouseEnter, onMouseLeave }
 
     // Ne charger que si le menu est ouvert
     if (isOpen) {
-      fetchCategoryCounts();
+      fetchCategoriesWithImages();
     }
   }, [isOpen]);
 
@@ -165,6 +202,12 @@ export default function MegaMenu({ isOpen, onClose, onMouseEnter, onMouseLeave }
                         fill
                         className="object-cover hover:scale-110 transition-transform duration-300"
                         sizes="96px"
+                        loading="lazy"
+                        quality={85}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = getCategoryPlaceholder(category.name);
+                        }}
                       />
                     </div>
                     <div className="flex-1 min-w-0">
