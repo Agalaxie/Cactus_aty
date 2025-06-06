@@ -27,9 +27,9 @@ export default function TopBar() {
   return (
     <div className="bg-[var(--accent)] text-white text-sm py-2 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between">
-          {/* Infos contact - Desktop uniquement */}
-          <div className="hidden lg:flex items-center space-x-6">
+        <div className="flex items-center">
+          {/* Infos contact - Gauche */}
+          <div className="hidden lg:flex items-center space-x-6 flex-shrink-0">
             <div className="flex items-center space-x-2">
               <PhoneIcon className="h-4 w-4" />
               <span>06 03 42 55 95</span>
@@ -44,9 +44,12 @@ export default function TopBar() {
             </div>
           </div>
 
-          {/* Annonces rotatif - Centre */}
-          <div className="flex-1 lg:flex-none lg:mx-8">
-            <div className="relative h-6 flex items-center justify-center">
+          {/* Espace flexible */}
+          <div className="flex-1"></div>
+
+          {/* Annonces rotatif - Droite */}
+          <div className="flex items-center justify-end">
+            <div className="relative h-6 w-full max-w-sm">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentIndex}
@@ -57,7 +60,7 @@ export default function TopBar() {
                     duration: 0.5,
                     ease: "easeInOut"
                   }}
-                  className="absolute inset-0 flex items-center justify-center font-medium text-center"
+                  className="absolute inset-0 flex items-center justify-end font-medium text-right whitespace-nowrap pr-2"
                 >
                   ✨ {announcements[currentIndex]} ✨
                 </motion.div>
@@ -65,22 +68,8 @@ export default function TopBar() {
             </div>
           </div>
 
-          {/* Indicateurs de progression - Desktop uniquement */}
-          <div className="hidden lg:flex items-center space-x-1">
-            {announcements.map((_, index) => (
-              <div
-                key={index}
-                className={`h-2 w-2 rounded-full transition-all duration-300 ${
-                  index === currentIndex 
-                    ? 'bg-white' 
-                    : 'bg-white/40'
-                }`}
-              />
-            ))}
-          </div>
-
-          {/* Infos contact mobile - Plus compact */}
-          <div className="lg:hidden flex items-center space-x-3">
+          {/* Infos contact mobile - Extrême droite */}
+          <div className="lg:hidden flex items-center space-x-3 flex-shrink-0 ml-4">
             <a href="tel:0603425595" className="flex items-center space-x-1">
               <PhoneIcon className="h-4 w-4" />
               <span className="hidden sm:inline">06 03 42 55 95</span>

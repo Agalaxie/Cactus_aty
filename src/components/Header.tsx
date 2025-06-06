@@ -6,7 +6,7 @@ import Link from 'next/link';
 import DarkModeSwitch from './DarkModeSwitch';
 import MegaMenu from './MegaMenu';
 import SearchBar from './SearchBar';
-import { MagnifyingGlassIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, ShoppingCartIcon, UserIcon } from '@heroicons/react/24/outline';
 import { useCart } from '@/contexts/CartContext';
 
 interface HeaderProps {
@@ -30,7 +30,7 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
   const handleMouseLeave = () => {
     const timeout = setTimeout(() => {
       setIsMegaMenuOpen(false);
-    }, 100); // Délai de 100ms avant fermeture
+    }, 100);
     setCloseTimeout(timeout);
   };
 
@@ -42,7 +42,6 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
     setIsMegaMenuOpen(false);
   };
 
-  // Cleanup du timeout au démontage
   useEffect(() => {
     return () => {
       if (closeTimeout) {
@@ -61,34 +60,34 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
         />
       )}
       
-      <header className="relative w-full bg-[var(--background)] text-[var(--card-title)] shadow-sm border-b border-[var(--border)] text-sm z-50">
+      <header className="relative w-full bg-white dark:bg-[var(--background)] shadow-md border-b border-gray-100 dark:border-[var(--border)] z-50">
         <div className="max-w-7xl mx-auto w-full px-4">
-          {/* Ligne principale du header */}
-          <div className="flex items-center py-3 gap-4">
+          {/* Ligne principale du header - Design inspiré FDJ */}
+          <div className="flex items-center py-4 gap-6">
             
-            {/* Logo */}
+            {/* Logo - Plus compact */}
             <div className="flex-shrink-0">
               <Link href="/">
                 <Image
                   src="/logo.png"
                   alt="Atypic Cactus"
-                  width={200}
-                  height={80}
-                  className="h-16 w-auto cursor-pointer"
+                  width={160}
+                  height={64}
+                  className="h-12 w-auto cursor-pointer"
                 />
               </Link>
             </div>
-              
-            {/* Navigation Menu - Collée et compacte */}
-            <nav className="hidden lg:flex items-center space-x-1">
+
+            {/* Navigation - Desktop uniquement */}
+            <nav className="hidden lg:flex items-center space-x-6">
               {showMegaMenu && (
                 <div 
                   className="relative"
                   onMouseEnter={handleMouseEnter}
                   onMouseLeave={handleMouseLeave}
                 >
-                  <button className="px-2 py-2 text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium flex items-center space-x-1">
-                    <span>Nos Collections</span>
+                  <button className="text-gray-700 dark:text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium flex items-center space-x-1">
+                    <span>Collections</span>
                     <svg 
                       className={`w-4 h-4 transition-transform duration-200 ${isMegaMenuOpen ? 'rotate-180' : ''}`} 
                       fill="none" 
@@ -99,7 +98,6 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
                     </svg>
                   </button>
                   
-                  {/* Mega Menu */}
                   <MegaMenu 
                     isOpen={isMegaMenuOpen} 
                     onClose={closeMegaMenu}
@@ -110,79 +108,124 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
               )}
               <Link
                 href="/conseils"
-                className="px-2 py-2 text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium"
+                className="text-gray-700 dark:text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium"
               >
                 Conseils
               </Link>
               <Link
                 href="/production"
-                className="px-2 py-2 text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium"
+                className="text-gray-700 dark:text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium"
               >
                 Production
               </Link>
               <Link
                 href="/amenagement"
-                className="px-2 py-2 text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium"
+                className="text-gray-700 dark:text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium"
               >
                 Aménagement
               </Link>
-              <Link
-                href="/qui-suis-je"
-                className="px-2 py-2 text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium"
-              >
-                Qui suis-je ?
-              </Link>
-              <Link
-                href="/espace-client"
-                className="px-2 py-2 text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium flex items-center space-x-1"
-              >
-                <span>👤</span>
-                <span>Mon Espace</span>
-              </Link>
             </nav>
-
-            {/* Barre de recherche - Agrandie et centrée */}
-            <div className="hidden md:flex flex-1 max-w-xl mx-6">
-              <SearchBar />
+              
+            {/* Barre de recherche centrale - Style FDJ */}
+            <div className="flex-1 max-w-lg mx-auto">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Quel cactus recherchez-vous ?"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-[var(--border)] rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-gray-50 dark:bg-[var(--card-bg)] text-gray-900 dark:text-[var(--card-title)] placeholder-gray-500 dark:placeholder-gray-400"
+                />
+              </div>
             </div>
             
-            {/* Boutons d'action - Collés ensemble */}
-            <div className="flex items-center space-x-2">
-              {/* Bouton recherche mobile */}
-              <button
-                onClick={() => setShowMobileSearch(!showMobileSearch)}
-                className="md:hidden flex items-center justify-center rounded-full p-2 bg-[var(--card-bg)] hover:bg-[var(--accent)] transition-colors text-[var(--card-title)] hover:text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-                aria-label="Rechercher"
+            {/* Groupe d'actions à droite - Simplifié */}
+            <div className="flex items-center space-x-4">
+
+              {/* Profil utilisateur - Desktop uniquement */}
+              <Link
+                href="/espace-client"
+                className="hidden lg:flex items-center space-x-2 p-2 text-gray-600 dark:text-[var(--card-title)] hover:text-[var(--accent)] transition-colors"
               >
-                <MagnifyingGlassIcon className="h-5 w-5" />
-              </button>
+                <UserIcon className="h-5 w-5" />
+                <span className="text-sm font-medium">Mon Espace</span>
+              </Link>
 
               {/* Panier */}
               <Link 
                 href="/panier"
-                className="relative flex items-center justify-center rounded-full p-2 bg-[var(--card-bg)] hover:bg-[var(--accent)] transition-colors text-[var(--card-title)] hover:text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                className="relative flex items-center justify-center p-2 text-gray-600 dark:text-[var(--card-title)] hover:text-[var(--accent)] transition-colors"
                 aria-label={`Panier (${totalItems} article${totalItems > 1 ? 's' : ''})`}
               >
-                <ShoppingCartIcon className="h-5 w-5" />
+                <ShoppingCartIcon className="h-6 w-6" />
                 {totalItems > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[var(--accent)] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center min-w-5">
                     {totalItems > 99 ? '99+' : totalItems}
                   </span>
                 )}
               </Link>
               
               {/* Dark Mode Switch */}
-              <DarkModeSwitch />
+              <div className="hidden lg:block">
+                <DarkModeSwitch />
+              </div>
+
+              {/* Menu mobile */}
+              <button
+                onClick={() => setShowMobileSearch(!showMobileSearch)}
+                className="lg:hidden flex items-center justify-center p-2 text-gray-600 dark:text-[var(--card-title)] hover:text-[var(--accent)] transition-colors"
+                aria-label="Menu"
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
             </div>
           </div>
 
-          {/* Barre de recherche mobile */}
+          {/* Navigation mobile */}
           {showMobileSearch && (
-            <div className="md:hidden py-3 border-t border-[var(--border)]">
-              <SearchBar 
-                isMobile={true} 
-                onClose={() => setShowMobileSearch(false)} 
-              />
+            <div className="lg:hidden py-3 border-t border-gray-100 dark:border-[var(--border)] space-y-2">
+              <div className="pb-3">
+                <SearchBar 
+                  isMobile={true} 
+                  onClose={() => setShowMobileSearch(false)} 
+                />
+              </div>
+              <nav className="flex flex-col space-y-2">
+                <Link
+                  href="/conseils"
+                  onClick={() => setShowMobileSearch(false)}
+                  className="text-gray-700 dark:text-[var(--card-title)] hover:text-[var(--accent)] py-2 font-medium"
+                >
+                  Conseils
+                </Link>
+                <Link
+                  href="/production"
+                  onClick={() => setShowMobileSearch(false)}
+                  className="text-gray-700 dark:text-[var(--card-title)] hover:text-[var(--accent)] py-2 font-medium"
+                >
+                  Production
+                </Link>
+                <Link
+                  href="/amenagement"
+                  onClick={() => setShowMobileSearch(false)}
+                  className="text-gray-700 dark:text-[var(--card-title)] hover:text-[var(--accent)] py-2 font-medium"
+                >
+                  Aménagement
+                </Link>
+                <Link
+                  href="/espace-client"
+                  onClick={() => setShowMobileSearch(false)}
+                  className="text-gray-700 dark:text-[var(--card-title)] hover:text-[var(--accent)] py-2 font-medium"
+                >
+                  Mon Espace
+                </Link>
+                <div className="pt-2">
+                  <DarkModeSwitch />
+                </div>
+              </nav>
             </div>
           )}
         </div>

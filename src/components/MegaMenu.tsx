@@ -118,7 +118,7 @@ export default function MegaMenu({ isOpen, onClose, onMouseEnter, onMouseLeave }
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
         transition={{ duration: 0.2 }}
-        className="fixed top-[75px] left-0 right-0 w-screen bg-[var(--background)] border-b border-[var(--border)] shadow-xl z-50"
+        className="fixed top-[116px] left-0 right-0 w-screen bg-[var(--background)] border-b border-[var(--border)] shadow-xl z-50"
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
