@@ -6,6 +6,7 @@ import Link from 'next/link';
 import DarkModeSwitch from './DarkModeSwitch';
 import MegaMenu from './MegaMenu';
 import SearchBar from './SearchBar';
+import RotatingAnnouncements from './RotatingAnnouncements';
 import { MagnifyingGlassIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
 import { useCart } from '@/contexts/CartContext';
 
@@ -112,6 +113,12 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
                   Conseils
                 </Link>
                 <Link
+                  href="/amenagement"
+                  className="px-3 py-2 text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium"
+                >
+                  Aménagement
+                </Link>
+                <Link
                   href="/qui-suis-je"
                   className="px-3 py-2 text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium"
                 >
@@ -156,7 +163,7 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
                 )}
               </Link>
 
-              <span className="hidden lg:block font-medium">Livraison offerte dès 200 €</span>
+              <RotatingAnnouncements />
               
               <DarkModeSwitch />
             </div>
