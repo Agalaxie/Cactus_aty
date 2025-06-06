@@ -17,9 +17,10 @@ interface Product {
 
 interface ProductListProps {
   limit?: number; // Nouveau prop pour limiter le nombre de produits
+  category?: string; // Nouveau prop pour filtrer par catégorie
 }
 
-export default function ProductList({ limit }: ProductListProps) {
+export default function ProductList({ limit, category }: ProductListProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +32,11 @@ export default function ProductList({ limit }: ProductListProps) {
           .from('products')
           .select('*')
           .order('id', { ascending: true });
+
+        // Si category est défini, filtrer par catégorie
+        if (category) {
+          query = query.eq('category', category);
+        }
 
         // Si limit est défini, l'appliquer à la requête
         if (limit) {
@@ -49,7 +55,7 @@ export default function ProductList({ limit }: ProductListProps) {
     }
 
     fetchProducts();
-  }, [limit]);
+  }, [limit, category]);
 
   if (loading) return (
     <div className="flex justify-center items-center min-h-[200px]">

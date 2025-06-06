@@ -109,7 +109,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Nos Produits - Seulement 3 cactus */}
+      {/* Nouveautés 2025 */}
       <section className="py-20 px-4 bg-[var(--background)]">
         <div className="max-w-6xl mx-auto">
           <motion.h2
@@ -117,11 +117,20 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.7 }}
             transition={{ duration: 0.7 }}
-            className="text-3xl sm:text-4xl font-bold text-center mb-12 text-[var(--card-title)]"
+            className="text-3xl sm:text-4xl font-bold text-center mb-4 text-[var(--card-title)]"
             >
-            Nos Spécialités
+            Nouveautés 2025
           </motion.h2>
-          <ProductList limit={3} />
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.7 }}
+            transition={{ delay: 0.2, duration: 0.7 }}
+            className="text-center text-[var(--foreground)] opacity-75 mb-12 max-w-2xl mx-auto"
+          >
+            Découvrez nos dernières acquisitions et variétés rares, sélectionnées spécialement pour cette année
+          </motion.p>
+          <ProductList limit={6} />
           
           {/* Bouton pour voir tous les produits */}
           <motion.div
@@ -135,7 +144,127 @@ export default function Home() {
               href="/categorie/cactus"
               className="inline-block px-8 py-4 bg-[var(--accent)] text-white rounded-full font-semibold shadow-lg transition-all hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             >
-              Voir tous nos cactus
+              Voir toutes les nouveautés
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Plantes Exceptionnelles */}
+      <section className="py-20 px-4 bg-[var(--card-bg)]">
+        <div className="max-w-6xl mx-auto">
+          <motion.h2
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.7 }}
+            transition={{ duration: 0.7 }}
+            className="text-3xl sm:text-4xl font-bold text-center mb-4 text-[var(--card-title)]"
+          >
+            ⭐ Plantes Exceptionnelles
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.7 }}
+            transition={{ delay: 0.2, duration: 0.7 }}
+            className="text-center text-[var(--foreground)] opacity-75 mb-12 max-w-2xl mx-auto"
+          >
+            Nos sujets d'exception : grands cactus, plantes centenaires et pièces uniques de collection
+          </motion.p>
+          <ProductList limit={3} category="Sujets exceptionnels" />
+          
+          <motion.div
+            className="text-center mt-12"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.7 }}
+            transition={{ delay: 0.5, duration: 0.7 }}
+          >
+            <Link
+              href="/categorie/sujets-exceptionnels"
+              className="inline-block px-8 py-4 bg-amber-600 text-white rounded-full font-semibold shadow-lg transition-all hover:shadow-xl hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-600"
+            >
+              Voir toutes les plantes exceptionnelles
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Cactus */}
+      <section className="py-20 px-4 bg-[var(--background)]">
+        <div className="max-w-6xl mx-auto">
+          <motion.h2
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.7 }}
+            transition={{ duration: 0.7 }}
+            className="text-3xl sm:text-4xl font-bold text-center mb-4 text-[var(--card-title)]"
+          >
+            🌵 Cactus
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.7 }}
+            transition={{ delay: 0.2, duration: 0.7 }}
+            className="text-center text-[var(--foreground)] opacity-75 mb-12 max-w-2xl mx-auto"
+          >
+            Notre spécialité : une large gamme de cactus résistants au froid, parfaits pour vos jardins et intérieurs
+          </motion.p>
+          <ProductList limit={6} category="Cactus" />
+          
+          <motion.div
+            className="text-center mt-12"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.7 }}
+            transition={{ delay: 0.5, duration: 0.7 }}
+          >
+            <Link
+              href="/categorie/cactus"
+              className="inline-block px-8 py-4 bg-green-600 text-white rounded-full font-semibold shadow-lg transition-all hover:shadow-xl hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600"
+            >
+              Voir toutes les plantes de cette catégorie
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Aloès */}
+      <section className="py-20 px-4 bg-[var(--card-bg)]">
+        <div className="max-w-6xl mx-auto">
+          <motion.h2
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.7 }}
+            transition={{ duration: 0.7 }}
+            className="text-3xl sm:text-4xl font-bold text-center mb-4 text-[var(--card-title)]"
+          >
+            🌿 Aloès
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.7 }}
+            transition={{ delay: 0.2, duration: 0.7 }}
+            className="text-center text-[var(--foreground)] opacity-75 mb-12 max-w-2xl mx-auto"
+          >
+            Plantes succulentes aux vertus thérapeutiques, faciles d'entretien et aux formes sculptées
+          </motion.p>
+          <ProductList limit={3} category="Aloes" />
+          
+          <motion.div
+            className="text-center mt-12"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.7 }}
+            transition={{ delay: 0.5, duration: 0.7 }}
+          >
+            <Link
+              href="/categorie/aloes"
+              className="inline-block px-8 py-4 bg-blue-600 text-white rounded-full font-semibold shadow-lg transition-all hover:shadow-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600"
+            >
+              Voir toutes les plantes de cette catégorie
             </Link>
           </motion.div>
         </div>
