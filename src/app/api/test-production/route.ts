@@ -191,6 +191,140 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    if (action === 'test_customer_email_only') {
+      // Test spécifique email client uniquement
+      try {
+        if (!process.env.RESEND_API_KEY) {
+          return NextResponse.json({
+            success: false,
+            error: 'RESEND_API_KEY manquante'
+          });
+        }
+
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        
+        const customerEmail = process.env.ADMIN_EMAIL || 'test@example.com';
+        const testSessionId = `test_customer_${Date.now()}`;
+        
+        // Template simplifié pour le test
+        const simpleTemplate = `
+          <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #10b981;">✅ Test Email Client</h1>
+            <p>Ceci est un test de l'email client seulement.</p>
+            <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <h3>Informations de test:</h3>
+              <p><strong>Email destinataire:</strong> ${customerEmail}</p>
+              <p><strong>ID de session:</strong> ${testSessionId}</p>
+              <p><strong>Montant:</strong> 20.00€</p>
+            </div>
+            <p style="color: #6b7280;">Si vous recevez cet email, l'envoi client fonctionne correctement.</p>
+          </div>
+        `;
+
+        const emailData = {
+          from: 'Atypic Cactus <onboarding@resend.dev>',
+          to: customerEmail,
+          subject: `🧪 Test Email Client - ${testSessionId}`,
+          html: simpleTemplate,
+        };
+
+        const emailResult = await resend.emails.send(emailData);
+        
+        return NextResponse.json({
+          success: true,
+          message: 'Email client envoyé avec succès',
+          email_id: emailResult.data?.id,
+          recipient: customerEmail,
+          test_session: testSessionId
+        });
+
+      } catch (error: any) {
+        return NextResponse.json({
+          success: false,
+          error: error.message,
+          details: error
+        });
+      }
+    }
+
+    if (action === 'test_detailed_email_send') {
+      // Test détaillé avec envoi séparé pour identifier les erreurs
+      try {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        
+        const customerEmail = process.env.ADMIN_EMAIL || 'test@example.com';
+        const adminEmail = process.env.ADMIN_EMAIL;
+        
+        const results = {
+          customer_email: null as any,
+          admin_email: null as any,
+          errors: [] as any[]
+        };
+
+        // Test email client
+        try {
+          const customerResult = await resend.emails.send({
+            from: 'Atypic Cactus <onboarding@resend.dev>',
+            to: customerEmail,
+            subject: '🧪 Test Client Email',
+            html: '<p>Test email client</p>'
+          });
+          results.customer_email = {
+            success: true,
+            id: customerResult.data?.id,
+            recipient: customerEmail
+          };
+        } catch (customerError: any) {
+          results.customer_email = {
+            success: false,
+            error: customerError.message,
+            details: customerError
+          };
+          results.errors.push({ type: 'customer', error: customerError });
+        }
+
+        // Test email admin
+        if (adminEmail) {
+          try {
+            const adminResult = await resend.emails.send({
+              from: 'Atypic Cactus <onboarding@resend.dev>',
+              to: adminEmail,
+              subject: '🧪 Test Admin Email',
+              html: '<p>Test email admin</p>'
+            });
+            results.admin_email = {
+              success: true,
+              id: adminResult.data?.id,
+              recipient: adminEmail
+            };
+          } catch (adminError: any) {
+            results.admin_email = {
+              success: false,
+              error: adminError.message,
+              details: adminError
+            };
+            results.errors.push({ type: 'admin', error: adminError });
+          }
+        }
+
+        return NextResponse.json({
+          success: results.errors.length === 0,
+          results,
+          summary: {
+            customer_success: results.customer_email?.success || false,
+            admin_success: results.admin_email?.success || false,
+            total_errors: results.errors.length
+          }
+        });
+
+      } catch (error: any) {
+        return NextResponse.json({
+          success: false,
+          error: error.message
+        });
+      }
+    }
+
     return NextResponse.json({ error: 'Action non reconnue' }, { status: 400 });
 
   } catch (error: any) {

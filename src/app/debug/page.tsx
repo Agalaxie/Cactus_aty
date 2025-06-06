@@ -55,6 +55,40 @@ export default function DebugPage() {
     }
   };
 
+  const testCustomerEmailOnly = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/test-production', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'test_customer_email_only' })
+      });
+      const result = await response.json();
+      setTestResults((prev: any) => ({ ...prev, customer_email_only: result }));
+    } catch (error) {
+      setTestResults((prev: any) => ({ ...prev, customer_email_only: { error: (error as Error).message } }));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const testDetailedEmailSend = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/test-production', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'test_detailed_email_send' })
+      });
+      const result = await response.json();
+      setTestResults((prev: any) => ({ ...prev, detailed_email_send: result }));
+    } catch (error) {
+      setTestResults((prev: any) => ({ ...prev, detailed_email_send: { error: (error as Error).message } }));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const StatusIcon = ({ success }: { success: boolean }) => (
     <span className={`text-2xl ${success ? 'text-green-500' : 'text-red-500'}`}>
       {success ? '✅' : '❌'}
@@ -76,7 +110,7 @@ export default function DebugPage() {
         </div>
 
         {/* Boutons d'action */}
-        <div className="grid md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
           <button
             onClick={runDiagnostics}
             disabled={loading}
@@ -99,6 +133,22 @@ export default function DebugPage() {
             className="bg-purple-500 text-white px-6 py-3 rounded-lg font-bold hover:bg-purple-600 disabled:opacity-50"
           >
             {loading ? '⏳ Test...' : '📧 Test Email'}
+          </button>
+
+          <button
+            onClick={testCustomerEmailOnly}
+            disabled={loading}
+            className="bg-orange-500 text-white px-6 py-3 rounded-lg font-bold hover:bg-orange-600 disabled:opacity-50"
+          >
+            {loading ? '⏳ Test...' : '👤 Email Client'}
+          </button>
+
+          <button
+            onClick={testDetailedEmailSend}
+            disabled={loading}
+            className="bg-red-500 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-600 disabled:opacity-50"
+          >
+            {loading ? '⏳ Test...' : '🔍 Email Détaillé'}
           </button>
         </div>
 
@@ -243,6 +293,30 @@ export default function DebugPage() {
                   </h3>
                   <pre className="text-xs bg-[var(--background)] p-3 rounded overflow-auto">
                     {JSON.stringify(testResults.send_email, null, 2)}
+                  </pre>
+                </div>
+              )}
+
+              {testResults.customer_email_only && (
+                <div className="border border-[var(--border)] rounded-lg p-4">
+                  <h3 className="font-bold text-[var(--card-title)] mb-2 flex items-center gap-2">
+                    <StatusIcon success={testResults.customer_email_only.success} />
+                    Test Email Client
+                  </h3>
+                  <pre className="text-xs bg-[var(--background)] p-3 rounded overflow-auto">
+                    {JSON.stringify(testResults.customer_email_only, null, 2)}
+                  </pre>
+                </div>
+              )}
+
+              {testResults.detailed_email_send && (
+                <div className="border border-[var(--border)] rounded-lg p-4">
+                  <h3 className="font-bold text-[var(--card-title)] mb-2 flex items-center gap-2">
+                    <StatusIcon success={testResults.detailed_email_send.success} />
+                    Test Email Détaillé
+                  </h3>
+                  <pre className="text-xs bg-[var(--background)] p-3 rounded overflow-auto">
+                    {JSON.stringify(testResults.detailed_email_send, null, 2)}
                   </pre>
                 </div>
               )}
