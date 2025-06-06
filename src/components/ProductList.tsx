@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import Image from 'next/image';
 import Link from 'next/link';
-import LazyMotionWrapper, { motion } from './LazyMotion';
+import LazyMotionWrapper from './LazyMotion';
+import { m } from 'framer-motion';
 
 interface Product {
   id: number;
@@ -110,7 +111,7 @@ export default function ProductList({ limit, category }: ProductListProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {products.map((product, index) => (
-              <motion.div
+              <m.div
                 key={product.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -159,7 +160,7 @@ export default function ProductList({ limit, category }: ProductListProps) {
                     </div>
                   </div>
                 </Link>
-              </motion.div>
+              </m.div>
             ))}
           </div>
         </div>

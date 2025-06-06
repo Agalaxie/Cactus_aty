@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
+import { m } from 'framer-motion';
 import { PhoneIcon, EnvelopeIcon, ClockIcon } from '@heroicons/react/24/outline';
 
 const announcements = [
@@ -51,7 +52,7 @@ export default function TopBar() {
           <div className="flex items-center justify-end">
             <div className="relative h-6 w-full max-w-sm">
               <AnimatePresence mode="wait">
-                <motion.div
+                <m.div
                   key={currentIndex}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -63,7 +64,7 @@ export default function TopBar() {
                   className="absolute inset-0 flex items-center justify-end font-medium text-right whitespace-nowrap pr-2"
                 >
                   ✨ {announcements[currentIndex]} ✨
-                </motion.div>
+                </m.div>
               </AnimatePresence>
             </div>
           </div>

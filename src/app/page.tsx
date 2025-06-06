@@ -6,7 +6,8 @@ import TopBar from "../components/TopBar";
 import ProductList from "../components/ProductList";
 import { useEffect, useState, Suspense } from 'react';
 import { supabase } from '../lib/supabase';
-import LazyMotionWrapper, { motion } from '../components/LazyMotion';
+import LazyMotionWrapper from '../components/LazyMotion';
+import { m } from 'framer-motion';
 
 // Composant optimisé pour le hero
 function HeroSection({ totalProducts }: { totalProducts: number }) {
@@ -14,14 +15,14 @@ function HeroSection({ totalProducts }: { totalProducts: number }) {
     <section className="flex flex-col md:flex-row items-center justify-center flex-1 py-20 bg-[var(--background)] relative overflow-hidden gap-12">
       <div className="max-w-6xl mx-auto w-full flex flex-col md:flex-row items-center justify-between gap-8 px-4">
         <div className="w-full md:w-7/12 text-left">
-          <motion.h1
+          <m.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             className="text-4xl sm:text-6xl font-extrabold mb-6 tracking-tight text-[var(--card-title)]"
           >
             Atypic Cactus
-          </motion.h1>
+          </m.h1>
           <p className="text-lg sm:text-2xl mb-4 text-[var(--foreground)]">
             Découvrez notre collection de {totalProducts} cactus et plantes grasses exceptionnels, sélectionnés avec passion par Vincent Basset, spécialiste depuis plus de 15 ans.
           </p>
