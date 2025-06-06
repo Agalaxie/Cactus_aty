@@ -3,7 +3,6 @@
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Header from '../../components/Header';
-import TopBar from '../../components/TopBar';
 
 export default function ProductionPage() {
   const etapes = [
@@ -35,7 +34,6 @@ export default function ProductionPage() {
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
-      <TopBar />
       <Header />
       
       <main className="max-w-6xl mx-auto px-4 py-12">

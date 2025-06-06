@@ -6,7 +6,6 @@ import Link from 'next/link';
 import DarkModeSwitch from './DarkModeSwitch';
 import MegaMenu from './MegaMenu';
 import SearchBar from './SearchBar';
-import TopBar from './TopBar';
 import { MagnifyingGlassIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
 import { useCart } from '@/contexts/CartContext';
 
@@ -54,9 +53,6 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
 
   return (
     <>
-      {/* Top Bar */}
-      <TopBar />
-      
       {/* Overlay pour fermer le mega menu */}
       {isMegaMenuOpen && (
         <div 
@@ -68,8 +64,10 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
       <header className="relative w-full bg-[var(--background)] text-[var(--card-title)] shadow-sm border-b border-[var(--border)] text-sm z-50">
         <div className="max-w-7xl mx-auto w-full px-4">
           {/* Ligne principale du header */}
-          <div className="flex items-center justify-between py-3">
-            <div className="flex items-center space-x-8">
+          <div className="flex items-center py-3 gap-4">
+            
+            {/* Logo */}
+            <div className="flex-shrink-0">
               <Link href="/">
                 <Image
                   src="/logo.png"
@@ -79,76 +77,77 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
                   className="h-16 w-auto cursor-pointer"
                 />
               </Link>
+            </div>
               
-              {/* Navigation Menu */}
-              <nav className="hidden lg:flex items-center space-x-6">
-                {showMegaMenu && (
-                  <div 
-                    className="relative"
+            {/* Navigation Menu - Collée et compacte */}
+            <nav className="hidden lg:flex items-center space-x-1">
+              {showMegaMenu && (
+                <div 
+                  className="relative"
+                  onMouseEnter={handleMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <button className="px-2 py-2 text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium flex items-center space-x-1">
+                    <span>Nos Collections</span>
+                    <svg 
+                      className={`w-4 h-4 transition-transform duration-200 ${isMegaMenuOpen ? 'rotate-180' : ''}`} 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  {/* Mega Menu */}
+                  <MegaMenu 
+                    isOpen={isMegaMenuOpen} 
+                    onClose={closeMegaMenu}
                     onMouseEnter={handleMouseEnter}
                     onMouseLeave={handleMouseLeave}
-                  >
-                    <button className="px-3 py-2 text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium flex items-center space-x-1">
-                      <span>Nos Collections</span>
-                      <svg 
-                        className={`w-4 h-4 transition-transform duration-200 ${isMegaMenuOpen ? 'rotate-180' : ''}`} 
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                    
-                    {/* Mega Menu */}
-                    <MegaMenu 
-                      isOpen={isMegaMenuOpen} 
-                      onClose={closeMegaMenu}
-                      onMouseEnter={handleMouseEnter}
-                      onMouseLeave={handleMouseLeave}
-                    />
-                  </div>
-                )}
-                <Link
-                  href="/conseils"
-                  className="px-3 py-2 text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium"
-                >
-                  Conseils
-                </Link>
-                <Link
-                  href="/production"
-                  className="px-3 py-2 text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium"
-                >
-                  Production
-                </Link>
-                <Link
-                  href="/amenagement"
-                  className="px-3 py-2 text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium"
-                >
-                  Aménagement
-                </Link>
-                <Link
-                  href="/qui-suis-je"
-                  className="px-3 py-2 text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium"
-                >
-                  Qui suis-je ?
-                </Link>
-                <Link
-                  href="/espace-client"
-                  className="px-3 py-2 text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium flex items-center space-x-1"
-                >
-                  <span>👤</span>
-                  <span>Mon Espace</span>
-                </Link>
-              </nav>
-            </div>
+                  />
+                </div>
+              )}
+              <Link
+                href="/conseils"
+                className="px-2 py-2 text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium"
+              >
+                Conseils
+              </Link>
+              <Link
+                href="/production"
+                className="px-2 py-2 text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium"
+              >
+                Production
+              </Link>
+              <Link
+                href="/amenagement"
+                className="px-2 py-2 text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium"
+              >
+                Aménagement
+              </Link>
+              <Link
+                href="/qui-suis-je"
+                className="px-2 py-2 text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium"
+              >
+                Qui suis-je ?
+              </Link>
+              <Link
+                href="/espace-client"
+                className="px-2 py-2 text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium flex items-center space-x-1"
+              >
+                <span>👤</span>
+                <span>Mon Espace</span>
+              </Link>
+            </nav>
 
-            {/* Barre de recherche - Desktop */}
-            <div className="hidden md:flex flex-1 max-w-md mx-8">
+            {/* Barre de recherche - Agrandie et centrée */}
+            <div className="hidden md:flex flex-1 max-w-xl mx-6">
               <SearchBar />
             </div>
             
-            <div className="flex items-center space-x-4">
+            {/* Boutons d'action - Collés ensemble */}
+            <div className="flex items-center space-x-2">
               {/* Bouton recherche mobile */}
               <button
                 onClick={() => setShowMobileSearch(!showMobileSearch)}
@@ -171,10 +170,8 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
                   </span>
                 )}
               </Link>
-
-              {/* Espace pour design équilibré */}
-              <div className="hidden lg:block w-32"></div>
               
+              {/* Dark Mode Switch */}
               <DarkModeSwitch />
             </div>
           </div>
