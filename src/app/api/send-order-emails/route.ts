@@ -124,48 +124,92 @@ export async function POST(request: NextRequest) {
     `;
 
     const emails = [];
+    const results = [];
 
-    // Email client
-    const customerEmailData = {
-      from: 'Atypic Cactus <onboarding@resend.dev>',
-      to: customerEmail,
-      subject: `✅ Commande confirmée - ${sessionId}`,
-      html: customerEmailTemplate,
-    };
-    emails.push(resend.emails.send(customerEmailData));
-
-    // Email admin (si configuré)
-    if (adminEmail) {
-      const adminEmailData = {
+    // Email client (priorité 1)
+    try {
+      const customerEmailData = {
         from: 'Atypic Cactus <onboarding@resend.dev>',
-        to: adminEmail,
-        subject: `🛒 Nouvelle commande - ${(amount / 100).toFixed(2)}€`,
-        html: adminEmailTemplate,
+        to: customerEmail,
+        subject: `✅ Commande confirmée - ${sessionId}`,
+        html: customerEmailTemplate,
       };
-      emails.push(resend.emails.send(adminEmailData));
+      
+      const customerResult = await resend.emails.send(customerEmailData);
+      results.push({ 
+        type: 'customer', 
+        success: true, 
+        id: customerResult.data?.id,
+        recipient: customerEmail 
+      });
+      
+      console.log('✅ Email client envoyé:', customerResult.data?.id);
+      
+    } catch (customerError: any) {
+      console.error('❌ Erreur email client:', customerError);
+      results.push({ 
+        type: 'customer', 
+        success: false, 
+        error: customerError.message 
+      });
     }
 
-    // Envoyer tous les emails
-    const results = await Promise.allSettled(emails);
-    
+    // Délai pour éviter rate limit (1 seconde)
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Email admin (priorité 2)
+    if (adminEmail) {
+      try {
+        const adminEmailData = {
+          from: 'Atypic Cactus <onboarding@resend.dev>',
+          to: adminEmail,
+          subject: `🛒 Nouvelle commande - ${(amount / 100).toFixed(2)}€`,
+          html: adminEmailTemplate,
+        };
+        
+        const adminResult = await resend.emails.send(adminEmailData);
+        results.push({ 
+          type: 'admin', 
+          success: true, 
+          id: adminResult.data?.id,
+          recipient: adminEmail 
+        });
+        
+        console.log('✅ Email admin envoyé:', adminResult.data?.id);
+        
+      } catch (adminError: any) {
+        console.error('❌ Erreur email admin:', adminError);
+        results.push({ 
+          type: 'admin', 
+          success: false, 
+          error: adminError.message 
+        });
+      }
+    }
+
     // Vérifier les résultats
-    const failures = results.filter(result => result.status === 'rejected');
+    const failures = results.filter(result => !result.success);
+    const successes = results.filter(result => result.success);
+    
     if (failures.length > 0) {
       console.error('Erreurs d\'envoi email:', failures);
       return NextResponse.json(
         { 
-          success: false, 
-          error: 'Erreur partielle lors de l\'envoi des emails',
-          details: failures 
+          success: successes.length > 0, // Succès partiel si au moins un email est passé
+          error: failures.length === results.length ? 'Tous les emails ont échoué' : 'Erreur partielle lors de l\'envoi des emails',
+          details: { successes, failures },
+          sent: successes.length,
+          failed: failures.length
         },
-        { status: 207 } // Multi-status
+        { status: successes.length > 0 ? 207 : 500 } // Multi-status ou erreur complète
       );
     }
 
     return NextResponse.json({ 
       success: true, 
       message: 'Emails envoyés avec succès',
-      sent: results.length
+      sent: results.length,
+      details: results
     });
 
   } catch (error) {
