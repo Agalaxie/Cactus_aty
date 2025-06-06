@@ -9,6 +9,16 @@ const nextConfig: NextConfig = {
     // Ignorer les erreurs TypeScript pendant le build
     ignoreBuildErrors: true,
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'www.atypic-cactus.com',
+        port: '',
+        pathname: '/wp-content/uploads/**',
+      },
+    ],
+  },
   /* config options here */
 };
 

@@ -1,6 +1,5 @@
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { NextRequest, NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
-import { createUser, getUserByEmail } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,40 +12,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Vérifier si l'utilisateur existe déjà
-    const existingUser = await getUserByEmail(email);
-    if (existingUser) {
-      return NextResponse.json(
-        { error: 'Un compte avec cet email existe déjà' },
-        { status: 409 }
-      );
-    }
+    const supabase = await createSupabaseServerClient();
 
-    // Hasher le mot de passe
-    const saltRounds = 12;
-    const passwordHash = await bcrypt.hash(password, saltRounds);
-
-    // Créer l'utilisateur
-    const user = await createUser(email, passwordHash, name);
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Erreur lors de la création du compte' },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json(
-      { 
-        success: true, 
-        message: 'Compte créé avec succès',
-        user: { 
-          id: user.id, 
-          email: user.email, 
-          name: user.name 
-        } 
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name: name,
+        },
       },
-      { status: 201 }
-    );
+    });
+
+    if (error) {
+      if (error.message.includes('already registered')) {
+        return NextResponse.json(
+          { error: 'Un compte avec cet email existe déjà' },
+          { status: 409 }
+        );
+      }
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Compte créé avec succès',
+      user: {
+        id: data.user?.id,
+        email: data.user?.email,
+        name: name,
+      },
+    });
   } catch (error) {
     console.error('Registration error:', error);
     return NextResponse.json(

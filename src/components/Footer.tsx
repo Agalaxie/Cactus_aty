@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { products } from '../data/products';
 
 const categories = [
   { id: 'cactus', name: 'Cactus', href: '/categorie/cactus' },
@@ -81,7 +80,7 @@ export default function Footer() {
         </div>
         
         <div className="border-t border-[var(--border)] mt-12 pt-8 text-center text-sm text-[var(--foreground)]">
-          <p>&copy; 2024 Atypic Cactus. Tous droits réservés. | 🌵 {products.length} produits disponibles | 🚚 Livraison 24H par transporteur</p>
+          <p>&copy; 2024 Atypic Cactus. Tous droits réservés. | 🌵 Catalogue disponible | 🚚 Livraison 24H par transporteur</p>
         </div>
       </div>
     </footer>

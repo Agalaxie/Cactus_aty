@@ -3,6 +3,8 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
 
 interface MegaMenuProps {
   isOpen: boolean;
@@ -11,52 +13,102 @@ interface MegaMenuProps {
   onMouseLeave?: () => void;
 }
 
-const categories = [
+interface Category {
+  name: string;
+  slug: string;
+  description: string;
+  image: string;
+  count: number;
+  dbCategories: string[]; // Catégories correspondantes dans Supabase
+}
+
+const categoriesConfig: Omit<Category, 'count'>[] = [
   {
     name: 'Agaves',
     slug: 'agaves',
     description: 'Agaves spectaculaires pour jardins modernes',
     image: '/Agave Nigra.jpg',
-    count: 22
+    dbCategories: ['Agaves', 'Agaves et aloes']
   },
   {
     name: 'Aloès', 
     slug: 'aloes',
     description: 'Aloès thérapeutiques et décoratifs',
     image: '/Aloe Aristata.jpg',
-    count: 8
-  },
-  {
-    name: 'Boutures',
-    slug: 'boutures', 
-    description: 'Boutures et jeunes plants',
-    image: '/Trichocereus Pachanoi-Macrogonus Bouture.jpg',
-    count: 6
+    dbCategories: ['Aloes', 'Agaves et aloes']
   },
   {
     name: 'Cactus',
     slug: 'cactus',
     description: 'Collection exclusive de cactus majestueux', 
     image: '/Echinocactus grusonii intermedius.jpg',
-    count: 33
+    dbCategories: ['Cactus', 'Cereus', 'Echinocactus', 'Mammillaria', 'Opuntia', 'Pachycereus']
   },
   {
     name: 'Yuccas',
     slug: 'yuccas',
     description: 'Yuccas résistants et décoratifs',
     image: '/cactus-vedette.png', 
-    count: 12
+    dbCategories: ['Yuccas', 'Rostrata']
+  },
+  {
+    name: 'Dasylirions',
+    slug: 'dasylirions',
+    description: 'Dasylirions architecturaux',
+    image: '/cactus-hero.png',
+    dbCategories: ['Dasylirions']
   },
   {
     name: 'Sujets Exceptionnels',
     slug: 'sujets-exceptionnels',
     description: 'Spécimens rares et collectionneurs',
     image: '/cactus-hero.png',
-    count: 19
+    dbCategories: ['Sujets exceptionnels']
   }
 ];
 
 export default function MegaMenu({ isOpen, onClose, onMouseEnter, onMouseLeave }: MegaMenuProps) {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchCategoryCounts() {
+      try {
+        setLoading(true);
+        
+        // Récupérer les compteurs pour chaque catégorie
+        const categoriesWithCounts = await Promise.all(
+          categoriesConfig.map(async (categoryConfig) => {
+            const { count, error } = await supabase
+              .from('products')
+              .select('*', { count: 'exact', head: true })
+              .in('category', categoryConfig.dbCategories);
+
+            if (error) {
+              console.error(`Erreur pour la catégorie ${categoryConfig.name}:`, error);
+              return { ...categoryConfig, count: 0 };
+            }
+
+            return { ...categoryConfig, count: count || 0 };
+          })
+        );
+
+        setCategories(categoriesWithCounts);
+      } catch (error) {
+        console.error('Erreur lors du chargement des compteurs:', error);
+        // En cas d'erreur, utiliser des valeurs par défaut
+        setCategories(categoriesConfig.map(cat => ({ ...cat, count: 0 })));
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    // Ne charger que si le menu est ouvert
+    if (isOpen) {
+      fetchCategoryCounts();
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
@@ -81,39 +133,57 @@ export default function MegaMenu({ isOpen, onClose, onMouseEnter, onMouseLeave }
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {categories.map((category) => (
-              <Link
-                key={category.slug}
-                href={`/categorie/${category.slug}`}
-                onClick={onClose}
-                className="block p-6 rounded-lg border-2 border-[var(--border)] hover:border-[var(--accent)] hover:shadow-lg transition-all hover:scale-105"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-24 h-24 relative rounded-lg overflow-hidden flex-shrink-0 shadow-md">
-                    <Image
-                      src={category.image}
-                      alt={category.name}
-                      fill
-                      className="object-cover hover:scale-110 transition-transform duration-300"
-                      sizes="96px"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-bold text-[var(--card-title)] text-xl">
-                        {category.name}
-                      </h3>
-                      <span className="text-base bg-[var(--accent)]/20 text-[var(--accent)] px-3 py-1 rounded-full font-bold">
-                        {category.count}
-                      </span>
+            {loading ? (
+              // Skeleton pendant le chargement
+              [...Array(6)].map((_, index) => (
+                <div key={index} className="p-6 rounded-lg border-2 border-[var(--border)] animate-pulse">
+                  <div className="flex items-center gap-4">
+                    <div className="w-24 h-24 bg-[var(--background)] rounded-lg"></div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="h-6 bg-[var(--background)] rounded w-24"></div>
+                        <div className="h-6 bg-[var(--background)] rounded-full w-8"></div>
+                      </div>
+                      <div className="h-4 bg-[var(--background)] rounded w-full"></div>
                     </div>
-                    <p className="text-base text-[var(--foreground)] opacity-75 mt-2 leading-relaxed">
-                      {category.description}
-                    </p>
                   </div>
                 </div>
-              </Link>
-            ))}
+              ))
+            ) : (
+              categories.map((category) => (
+                <Link
+                  key={category.slug}
+                  href={`/categorie/${category.slug}`}
+                  onClick={onClose}
+                  className="block p-6 rounded-lg border-2 border-[var(--border)] hover:border-[var(--accent)] hover:shadow-lg transition-all hover:scale-105"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-24 h-24 relative rounded-lg overflow-hidden flex-shrink-0 shadow-md">
+                      <Image
+                        src={category.image}
+                        alt={category.name}
+                        fill
+                        className="object-cover hover:scale-110 transition-transform duration-300"
+                        sizes="96px"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-bold text-[var(--card-title)] text-xl">
+                          {category.name}
+                        </h3>
+                        <span className="text-base bg-[var(--accent)]/20 text-[var(--accent)] px-3 py-1 rounded-full font-bold">
+                          {category.count}
+                        </span>
+                      </div>
+                      <p className="text-base text-[var(--foreground)] opacity-75 mt-2 leading-relaxed">
+                        {category.description}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              ))
+            )}
           </div>
 
           <div className="border-t border-[var(--border)] mt-8 pt-8 max-w-5xl mx-auto">

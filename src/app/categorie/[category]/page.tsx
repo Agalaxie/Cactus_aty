@@ -1,63 +1,197 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import Header from '../../../components/Header';
-import { getProductsByCategory, getCategoryById, CategoryType } from '../../../data/products';
+import { supabase } from '../../../lib/supabase';
 
-type SortOption = 'name' | 'price-asc' | 'price-desc' | 'featured';
+interface Product {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  image_url: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  href: string;
+}
+
+const categories: Category[] = [
+  {
+    id: 'agaves',
+    name: 'Agaves',
+    description: 'Agaves spectaculaires pour jardins modernes',
+    icon: '🪴',
+    href: '/categorie/agaves'
+  },
+  {
+    id: 'aloes',
+    name: 'Aloès',
+    description: 'Aloès thérapeutiques et décoratifs',
+    icon: '🌿',
+    href: '/categorie/aloes'
+  },
+  {
+    id: 'cactus',
+    name: 'Cactus',
+    description: 'Collection exclusive de cactus majestueux',
+    icon: '🌵',
+    href: '/categorie/cactus'
+  },
+  {
+    id: 'yuccas',
+    name: 'Yuccas',
+    description: 'Yuccas résistants et décoratifs',
+    icon: '🌴',
+    href: '/categorie/yuccas'
+  },
+  {
+    id: 'dasylirions',
+    name: 'Dasylirions',
+    description: 'Dasylirions architecturaux',
+    icon: '🌾',
+    href: '/categorie/dasylirions'
+  },
+  {
+    id: 'sujets-exceptionnels',
+    name: 'Sujets Exceptionnels',
+    description: 'Spécimens rares et collectionneurs',
+    icon: '⭐',
+    href: '/categorie/sujets-exceptionnels'
+  }
+];
+
+type SortOption = 'name' | 'price-asc' | 'price-desc';
+
+// Fonction pour créer un slug SEO-friendly à partir du nom du produit
+const createSlug = (name: string): string => {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Enlever les accents
+    .replace(/[^a-z0-9\s-]/g, '') // Garder seulement lettres, chiffres, espaces et tirets
+    .replace(/\s+/g, '-') // Remplacer espaces par tirets
+    .replace(/-+/g, '-') // Éviter les tirets multiples
+    .trim()
+    .substring(0, 60); // Limiter la longueur
+};
+
+// Fonction pour mapper les URLs vers les catégories de la base de données
+const getCategoryFilters = (categoryName: string): string[] => {
+  switch (categoryName) {
+    case 'cactus':
+      return ['Cactus', 'Cereus', 'Echinocactus', 'Mammillaria', 'Opuntia', 'Pachycereus'];
+    case 'agaves':
+      return ['Agaves', 'Agaves et aloes'];
+    case 'aloes':
+      return ['Aloes', 'Agaves et aloes'];
+    case 'yuccas':
+      return ['Yuccas', 'Rostrata'];
+    case 'dasylirions':
+      return ['Dasylirions'];
+    case 'sujets-exceptionnels':
+      return ['Sujets exceptionnels'];
+    default:
+      return [categoryName];
+  }
+};
 
 export default function CategoryPage() {
   const params = useParams();
-  const categoryId = params.category as CategoryType;
+  const categoryName = params.category as string;
   
-  const [sortBy, setSortBy] = useState<SortOption>('featured');
+  const [sortBy, setSortBy] = useState<SortOption>('name');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000]);
-  const [showOnlyInStock, setShowOnlyInStock] = useState(true);
-  
-  // Nouveaux filtres
-  const [selectedSize, setSelectedSize] = useState<string>('all');
-  const [selectedColdResistance, setSelectedColdResistance] = useState<string>('all');
-  const [selectedCareLevel, setSelectedCareLevel] = useState<string>('all');
-  const [selectedGrowthRate, setSelectedGrowthRate] = useState<string>('all');
-  const [showOnlyFlowering, setShowOnlyFlowering] = useState(false);
-  const [showOnlyIndoor, setShowOnlyIndoor] = useState(false);
-  const [showOnlyDroughtTolerant, setShowOnlyDroughtTolerant] = useState(false);
 
-  const category = getCategoryById(categoryId);
-  const allProducts = getProductsByCategory(categoryId);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fonction pour obtenir une image placeholder SVG valide
+  const getPlaceholderImage = () => {
+    return "data:image/svg+xml,%3csvg width='400' height='400' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='400' height='400' fill='%23f3f4f6'/%3e%3cg transform='translate(200%2c200)'%3e%3ccircle cx='0' cy='-30' r='25' fill='%2310b981'/%3e%3cpath d='M-5%2c-50 Q0%2c-60 5%2c-50 L3%2c-30 L-3%2c-30 Z' fill='%2310b981'/%3e%3cpath d='M-15%2c-35 Q-20%2c-45 -10%2c-40 L-8%2c-25 L-12%2c-25 Z' fill='%2310b981'/%3e%3cpath d='M15%2c-35 Q20%2c-45 10%2c-40 L12%2c-25 L8%2c-25 Z' fill='%2310b981'/%3e%3cellipse cx='0' cy='20' rx='40' ry='20' fill='%23d97706'/%3e%3c/g%3e%3ctext x='200' y='350' text-anchor='middle' fill='%236b7280' font-family='Arial%2c sans-serif' font-size='16'%3eImage non disponible%3c/text%3e%3c/svg%3e";
+  };
+
+  // Fonction pour valider et nettoyer l'URL de l'image
+  const getValidImageUrl = (imageUrl: string | null | undefined): string => {
+    if (!imageUrl || imageUrl.trim() === '') {
+      return getPlaceholderImage();
+    }
+
+    const cleanUrl = imageUrl.trim();
+    
+    // Si c'est une URL locale (/images/...) ou invalide, utiliser le placeholder
+    if (cleanUrl.startsWith('/images/') || !cleanUrl.startsWith('http')) {
+      return getPlaceholderImage();
+    }
+
+    // Vérifier si c'est une URL HTTPS valide
+    if (cleanUrl.startsWith('https://')) {
+      return cleanUrl;
+    }
+
+    // Sinon utiliser le placeholder
+    return getPlaceholderImage();
+  };
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Obtenir les catégories à filtrer pour cette page
+        const categoryFilters = getCategoryFilters(categoryName);
+        
+        // Requête pour récupérer les produits de cette catégorie depuis Supabase
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .in('category', categoryFilters)
+          .order('name', { ascending: true });
+
+        if (error) throw error;
+        setProducts(data || []);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Une erreur est survenue');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProducts();
+  }, [categoryName]);
+
+  const category = categories.find(cat => cat.id === categoryName);
 
   const filteredAndSortedProducts = useMemo(() => {
-    let filtered = allProducts.filter(product => {
-      const inPriceRange = product.basePrice >= priceRange[0] && product.basePrice <= priceRange[1];
-      const inStock = showOnlyInStock ? product.inStock : true;
+    let filtered = products.filter(product => {
+      const inPriceRange = product.price >= priceRange[0] && product.price <= priceRange[1];
       
-      // Filtres avancés basés sur les caractéristiques
-      const characteristics = product.characteristics;
-      
-      const sizeMatch = selectedSize === 'all' || !characteristics || characteristics.matureSize === selectedSize;
-      
-      const coldResistanceMatch = selectedColdResistance === 'all' || !characteristics || (() => {
-        switch (selectedColdResistance) {
-          case 'tres-resistant': return characteristics.coldResistance <= -10;
-          case 'resistant': return characteristics.coldResistance <= -5 && characteristics.coldResistance > -10;
-          case 'peu-resistant': return characteristics.coldResistance > -5;
-          default: return true;
+      // Pour la catégorie cactus, exclure les produits mal catégorisés
+      if (categoryName === 'cactus') {
+        const productNameLower = product.name.toLowerCase();
+        const isWronglyPlaced = productNameLower.includes('agave') ||
+                               productNameLower.includes('aloe') ||
+                               productNameLower.includes('dasylirion') ||
+                               productNameLower.includes('yucca') ||
+                               productNameLower.includes('senecio');
+        
+        if (isWronglyPlaced) {
+          return false; // Exclure ces produits de la catégorie cactus
         }
-      })();
+      }
       
-      const careLevelMatch = selectedCareLevel === 'all' || !characteristics || characteristics.careLevel === selectedCareLevel;
-      const growthRateMatch = selectedGrowthRate === 'all' || !characteristics || characteristics.growthRate === selectedGrowthRate;
-      
-      const floweringMatch = !showOnlyFlowering || !characteristics || characteristics.flowering;
-      const indoorMatch = !showOnlyIndoor || !characteristics || characteristics.indoorSuitable;
-      const droughtTolerantMatch = !showOnlyDroughtTolerant || !characteristics || characteristics.droughtTolerant;
-      
-      return inPriceRange && inStock && sizeMatch && coldResistanceMatch && 
-             careLevelMatch && growthRateMatch && floweringMatch && indoorMatch && droughtTolerantMatch;
+      return inPriceRange;
     });
 
     // Tri
@@ -66,23 +200,15 @@ export default function CategoryPage() {
         filtered.sort((a, b) => a.name.localeCompare(b.name));
         break;
       case 'price-asc':
-        filtered.sort((a, b) => a.basePrice - b.basePrice);
+        filtered.sort((a, b) => a.price - b.price);
         break;
       case 'price-desc':
-        filtered.sort((a, b) => b.basePrice - a.basePrice);
-        break;
-      case 'featured':
-        filtered.sort((a, b) => {
-          if (a.featured && !b.featured) return -1;
-          if (!a.featured && b.featured) return 1;
-          return a.basePrice - b.basePrice;
-        });
+        filtered.sort((a, b) => b.price - a.price);
         break;
     }
 
     return filtered;
-  }, [allProducts, sortBy, priceRange, showOnlyInStock, selectedSize, selectedColdResistance, 
-      selectedCareLevel, selectedGrowthRate, showOnlyFlowering, showOnlyIndoor, showOnlyDroughtTolerant]);
+  }, [products, sortBy, priceRange, categoryName]);
 
   if (!category) {
     return (
@@ -90,6 +216,32 @@ export default function CategoryPage() {
         <Header />
         <div className="max-w-6xl mx-auto px-4 py-20 text-center">
           <h1 className="text-3xl font-bold text-[var(--card-title)]">Catégorie non trouvée</h1>
+          <Link href="/" className="text-[var(--accent)] hover:underline mt-4 inline-block">
+            Retour à l'accueil
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[var(--background)]">
+        <Header />
+        <div className="flex justify-center items-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--accent)]"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[var(--background)]">
+        <Header />
+        <div className="max-w-6xl mx-auto px-4 py-20 text-center">
+          <h1 className="text-3xl font-bold text-red-500">Erreur</h1>
+          <p className="text-[var(--foreground)] mt-4">{error}</p>
           <Link href="/" className="text-[var(--accent)] hover:underline mt-4 inline-block">
             Retour à l'accueil
           </Link>
@@ -136,8 +288,7 @@ export default function CategoryPage() {
       {/* Filtres et tri */}
       <section className="py-6 px-4 border-b border-[var(--border)] bg-[var(--card-bg)]">
         <div className="max-w-6xl mx-auto">
-          {/* Première ligne : Tri et stock */}
-          <div className="flex flex-wrap gap-4 items-center justify-between mb-6">
+          <div className="flex flex-wrap gap-4 items-center justify-between">
             <div className="flex items-center gap-4">
               <span className="text-sm font-medium text-[var(--card-title)]">Trier par :</span>
               <select
@@ -145,137 +296,27 @@ export default function CategoryPage() {
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
                 className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--card-title)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               >
-                <option value="featured">Mis en avant</option>
                 <option value="name">Nom A-Z</option>
                 <option value="price-asc">Prix croissant</option>
                 <option value="price-desc">Prix décroissant</option>
               </select>
             </div>
-
+            
+            {/* Filtre de prix */}
             <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={showOnlyInStock}
-                  onChange={(e) => setShowOnlyInStock(e.target.checked)}
-                  className="rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)]"
-                />
-                <span className="text-[var(--card-title)]">En stock seulement</span>
-              </label>
-            </div>
-          </div>
-
-          {/* Filtres avancés */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            {/* Taille adulte */}
-            <div>
-              <label className="block text-xs font-medium text-[var(--card-title)] mb-1">Taille adulte :</label>
+              <span className="text-sm font-medium text-[var(--card-title)]">Prix max :</span>
               <select
-                value={selectedSize}
-                onChange={(e) => setSelectedSize(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--card-title)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                value={priceRange[1]}
+                onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
+                className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--card-title)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               >
-                <option value="all">Toutes tailles</option>
-                <option value="petit">🌱 Petit</option>
-                <option value="moyen">🌿 Moyen</option>
-                <option value="grand">🌳 Grand</option>
-                <option value="géant">🌲 Géant</option>
+                <option value="100">100€</option>
+                <option value="200">200€</option>
+                <option value="500">500€</option>
+                <option value="1000">1000€</option>
+                <option value="2000">2000€</option>
               </select>
             </div>
-
-            {/* Résistance au froid */}
-            <div>
-              <label className="block text-xs font-medium text-[var(--card-title)] mb-1">Résistance au gel :</label>
-              <select
-                value={selectedColdResistance}
-                onChange={(e) => setSelectedColdResistance(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--card-title)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-              >
-                <option value="all">Toutes résistances</option>
-                <option value="tres-resistant">❄️ Très résistant (-10°C et plus)</option>
-                <option value="resistant">🧊 Résistant (-5°C à -10°C)</option>
-                <option value="peu-resistant">🌡️ Peu résistant (+5°C)</option>
-              </select>
-            </div>
-
-            {/* Facilité d'entretien */}
-            <div>
-              <label className="block text-xs font-medium text-[var(--card-title)] mb-1">Entretien :</label>
-              <select
-                value={selectedCareLevel}
-                onChange={(e) => setSelectedCareLevel(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--card-title)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-              >
-                <option value="all">Tous niveaux</option>
-                <option value="facile">✅ Facile</option>
-                <option value="moyen">⚡ Moyen</option>
-                <option value="difficile">🔥 Difficile</option>
-              </select>
-            </div>
-
-            {/* Vitesse de croissance */}
-            <div>
-              <label className="block text-xs font-medium text-[var(--card-title)] mb-1">Croissance :</label>
-              <select
-                value={selectedGrowthRate}
-                onChange={(e) => setSelectedGrowthRate(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--card-title)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-              >
-                <option value="all">Toutes vitesses</option>
-                <option value="rapide">🚀 Rapide</option>
-                <option value="moyenne">🚶 Moyenne</option>
-                <option value="lente">🐌 Lente</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Filtres par propriétés */}
-          <div className="flex flex-wrap gap-4">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={showOnlyFlowering}
-                onChange={(e) => setShowOnlyFlowering(e.target.checked)}
-                className="rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)]"
-              />
-              <span className="text-[var(--card-title)]">🌸 Floraison</span>
-            </label>
-
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={showOnlyIndoor}
-                onChange={(e) => setShowOnlyIndoor(e.target.checked)}
-                className="rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)]"
-              />
-              <span className="text-[var(--card-title)]">🏠 Adapté intérieur</span>
-            </label>
-
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={showOnlyDroughtTolerant}
-                onChange={(e) => setShowOnlyDroughtTolerant(e.target.checked)}
-                className="rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)]"
-              />
-              <span className="text-[var(--card-title)]">🏜️ Résistant sécheresse</span>
-            </label>
-
-            {/* Bouton reset */}
-            <button
-              onClick={() => {
-                setSelectedSize('all');
-                setSelectedColdResistance('all');
-                setSelectedCareLevel('all');
-                setSelectedGrowthRate('all');
-                setShowOnlyFlowering(false);
-                setShowOnlyIndoor(false);
-                setShowOnlyDroughtTolerant(false);
-              }}
-              className="text-sm text-[var(--accent)] hover:text-[var(--accent)]/80 font-medium"
-            >
-              🔄 Réinitialiser filtres
-            </button>
           </div>
         </div>
       </section>
@@ -303,22 +344,27 @@ export default function CategoryPage() {
                   transition={{ delay: index * 0.1, duration: 0.6 }}
                   className="group"
                 >
-                  <Link href={`/produit/${product.id}`}>
+                  {/* Utiliser un slug SEO-friendly pour l'URL */}
+                  <Link href={`/produit/${createSlug(product.name)}`}>
                     <div className="bg-[var(--card-bg)] rounded-2xl overflow-hidden border border-[var(--border)] hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
                       {/* Image */}
                       <div className="relative aspect-square overflow-hidden">
                         <Image
-                          src={product.images[0]}
+                          src={getValidImageUrl(product.image_url)}
                           alt={product.name}
                           fill
                           className="object-cover group-hover:scale-110 transition-transform duration-500"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = getPlaceholderImage();
+                          }}
                         />
-                        {product.featured && (
+                        {product.price > 100 && (
                           <div className="absolute top-3 left-3 bg-[var(--accent)] text-white px-2 py-1 rounded-full text-xs font-medium">
-                            ⭐ Vedette
+                            ⭐ Populaire
                           </div>
                         )}
-                        {!product.inStock && (
+                        {product.price === 0 && (
                           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                             <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium">
                               Rupture de stock
@@ -332,47 +378,16 @@ export default function CategoryPage() {
                         <h3 className="font-bold text-lg text-[var(--card-title)] mb-1 group-hover:text-[var(--accent)] transition-colors">
                           {product.name}
                         </h3>
-                        {product.latin && (
-                          <p className="text-sm italic text-[var(--foreground)] opacity-75 mb-3">
-                            {product.latin}
-                          </p>
-                        )}
                         <p className="text-sm text-[var(--foreground)] opacity-75 mb-4 line-clamp-2">
-                          {product.description}
+                          {product.description.substring(0, 100)}...
                         </p>
-                        {/* Caractéristiques rapides */}
-                        {product.characteristics && (
-                          <div className="flex flex-wrap gap-1 mb-3">
-                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                              {product.characteristics.matureSize}
-                            </span>
-                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                              {product.characteristics.careLevel}
-                            </span>
-                            {product.characteristics.coldResistance <= -5 && (
-                              <span className="text-xs bg-cyan-100 text-cyan-800 px-2 py-1 rounded-full">
-                                ❄️ résistant
-                              </span>
-                            )}
-                            {product.characteristics.flowering && (
-                              <span className="text-xs bg-pink-100 text-pink-800 px-2 py-1 rounded-full">
-                                🌸 fleurit
-                              </span>
-                            )}
-                            {product.characteristics.indoorSuitable && (
-                              <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
-                                🏠 intérieur
-                              </span>
-                            )}
-                          </div>
-                        )}
                         
                         <div className="flex items-center justify-between">
                           <span className="text-xl font-bold text-[var(--accent)]">
-                            À partir de {product.basePrice}€
+                            {product.price > 0 ? product.price + '€' : 'Sur demande'}
                           </span>
-                          <span className="text-sm text-[var(--foreground)] opacity-50">
-                            {product.sizes.length} taille{product.sizes.length > 1 ? 's' : ''}
+                          <span className="text-sm text-[var(--foreground)] opacity-50 capitalize">
+                            {product.category}
                           </span>
                         </div>
                       </div>

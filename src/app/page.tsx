@@ -3,11 +3,29 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Header from "../components/Header";
-import { products, getProductsByCategory, categories } from "../data/products";
+import ProductList from "../components/ProductList";
+import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
 
 export default function Home() {
-  // Produits en vedette pour la section spécialités
-  const featuredProducts = products.slice(0, 3);
+  const [totalProducts, setTotalProducts] = useState(0);
+
+  useEffect(() => {
+    async function fetchTotalProducts() {
+      const { count, error } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true });
+      
+      if (error) {
+        console.error('Error fetching total products:', error);
+        return;
+      }
+
+      setTotalProducts(count || 0);
+    }
+
+    fetchTotalProducts();
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--background)] text-[var(--foreground)]">
@@ -33,7 +51,7 @@ export default function Home() {
               transition={{ delay: 0.2, duration: 0.7 }}
               className="text-lg sm:text-2xl mb-4 text-[var(--foreground)]"
             >
-              Découvrez notre collection de {products.length} cactus et plantes grasses exceptionnels, sélectionnés avec passion par Vincent Basset, spécialiste depuis plus de 15 ans.
+              Découvrez notre collection de {totalProducts} cactus et plantes grasses exceptionnels, sélectionnés avec passion par Vincent Basset, spécialiste depuis plus de 15 ans.
             </motion.p>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -91,88 +109,36 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Produits Vedettes */}
+      {/* Nos Produits - Seulement 3 cactus */}
       <section className="py-20 px-4 bg-[var(--background)]">
-        <motion.div
-          className="max-w-6xl mx-auto"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.3 }}
-        >
+        <div className="max-w-6xl mx-auto">
           <motion.h2
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.7 }}
             transition={{ duration: 0.7 }}
             className="text-3xl sm:text-4xl font-bold text-center mb-12 text-[var(--card-title)]"
-          >
+            >
             Nos Spécialités
           </motion.h2>
+          <ProductList limit={3} />
           
-          <motion.div
-            className="grid md:grid-cols-3 gap-8"
-            variants={{
-              hidden: {},
-              visible: { transition: { staggerChildren: 0.2 } }
-            }}
-          >
-            {featuredProducts.map((product, index) => (
-              <motion.div
-                key={product.id}
-                whileHover={{ y: -8, scale: 1.02 }}
-                className="bg-[var(--card-bg)] rounded-2xl shadow-lg border border-[var(--border)] overflow-hidden group cursor-pointer"
-                initial={{ opacity: 0, y: 50 }}
-                variants={{ visible: { opacity: 1, y: 0, transition: { duration: 0.7 } } }}
-              >
-                <Link href={`/produit/${product.id}`} className="block">
-                  <div className="aspect-square relative overflow-hidden">
-                    <Image
-                      src={product.images[0]}
-                      alt={product.name}
-                      width={400}
-                      height={400}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    {product.characteristics?.coldResistance && (
-                      <div className="absolute top-4 left-4 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
-                        ❄️ {product.characteristics.coldResistance}°C
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-6">
-                    <span className="text-sm font-medium text-[var(--accent)] uppercase tracking-wide">
-                      {product.category}
-                    </span>
-                    <h3 className="text-xl font-bold mt-2 mb-3 text-[var(--card-title)]">
-                      {product.name}
-                    </h3>
-                    <p className="text-sm text-[var(--foreground)] mb-3 line-clamp-2">
-                      {product.description}
-                    </p>
-                    <p className="text-2xl font-bold text-[var(--accent)]">
-                      {product.basePrice}€
-                    </p>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </motion.div>
-
+          {/* Bouton pour voir tous les produits */}
           <motion.div
             className="text-center mt-12"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.7 }}
-            transition={{ delay: 0.4, duration: 0.7 }}
+            transition={{ delay: 0.5, duration: 0.7 }}
           >
             <Link
               href="/categorie/cactus"
-              className="inline-block px-8 py-4 border-2 border-[var(--accent)] text-[var(--accent)] rounded-full font-semibold transition-all hover:bg-[var(--accent)] hover:text-white"
+              className="inline-block px-8 py-4 bg-[var(--accent)] text-white rounded-full font-semibold shadow-lg transition-all hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             >
-              Voir tous les produits →
+              Voir tous nos cactus
             </Link>
           </motion.div>
-        </motion.div>
+        </div>
       </section>
 
       {/* Services Banner */}
@@ -224,399 +190,6 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
-
-      {/* Statistiques */}
-      <section className="py-16 px-4 bg-[var(--accent)]/10">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={{
-              hidden: {},
-              visible: { transition: { staggerChildren: 0.1 } }
-            }}
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              variants={{ visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } }}
-            >
-              <div className="text-3xl font-bold text-[var(--accent)] mb-2">{products.length}</div>
-              <div className="text-sm text-[var(--foreground)]">Spécimens disponibles</div>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              variants={{ visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } }}
-            >
-              <div className="text-3xl font-bold text-[var(--accent)] mb-2">{categories.length}</div>
-              <div className="text-sm text-[var(--foreground)]">Catégories</div>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              variants={{ visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } }}
-            >
-              <div className="text-3xl font-bold text-[var(--accent)] mb-2">15+</div>
-              <div className="text-sm text-[var(--foreground)]">Années d'expérience</div>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              variants={{ visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } }}
-            >
-              <div className="text-3xl font-bold text-[var(--accent)] mb-2">🇫🇷</div>
-              <div className="text-sm text-[var(--foreground)]">Livraison France</div>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Section Écologique */}
-      <section className="py-20 px-4 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20">
-        <motion.div
-          className="max-w-4xl mx-auto text-center"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.3 }}
-        >
-          <motion.div
-            className="text-6xl mb-6"
-            initial={{ opacity: 0, scale: 0.8 }}
-            variants={{ visible: { opacity: 1, scale: 1, transition: { duration: 0.7 } } }}
-          >
-            🌍
-          </motion.div>
-          <motion.h2
-            initial={{ opacity: 0, y: 40 }}
-            variants={{ visible: { opacity: 1, y: 0, transition: { duration: 0.7 } } }}
-            className="text-3xl sm:text-4xl font-bold mb-6 text-[var(--card-title)]"
-          >
-            Choisir l'écologie
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            variants={{ visible: { opacity: 1, y: 0, transition: { delay: 0.2, duration: 0.7 } } }}
-            className="text-lg sm:text-xl text-[var(--foreground)] mb-8 leading-relaxed"
-          >
-            Optez pour des plantes écologiques, c'est œuvrer pour la planète en réduisant sa consommation d'eau !
-            <br />
-            Nos cactus, agaves, aloés et yuccas sont naturellement adaptés aux climats secs et demandent très peu d'entretien.
-          </motion.p>
-          <motion.div
-            className="grid md:grid-cols-3 gap-6 mt-12"
-            variants={{
-              hidden: {},
-              visible: { transition: { staggerChildren: 0.1 } }
-            }}
-          >
-            <motion.div
-              className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-xl p-6 border border-green-200 dark:border-green-800"
-              initial={{ opacity: 0, y: 30 }}
-              variants={{ visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } }}
-            >
-              <div className="text-3xl mb-4">💧</div>
-              <h3 className="font-semibold mb-2 text-[var(--card-title)]">Économie d'eau</h3>
-              <p className="text-sm text-[var(--foreground)]">Jusqu'à 90% moins d'arrosage qu'une plante classique</p>
-            </motion.div>
-            <motion.div
-              className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-xl p-6 border border-green-200 dark:border-green-800"
-              initial={{ opacity: 0, y: 30 }}
-              variants={{ visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } }}
-            >
-              <div className="text-3xl mb-4">🌱</div>
-              <h3 className="font-semibold mb-2 text-[var(--card-title)]">Croissance lente</h3>
-              <p className="text-sm text-[var(--foreground)]">Moins d'émissions de CO2 liées à la production</p>
-            </motion.div>
-            <motion.div
-              className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-xl p-6 border border-green-200 dark:border-green-800"
-              initial={{ opacity: 0, y: 30 }}
-              variants={{ visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } }}
-            >
-              <div className="text-3xl mb-4">♻️</div>
-              <h3 className="font-semibold mb-2 text-[var(--card-title)]">Longévité</h3>
-              <p className="text-sm text-[var(--foreground)]">Des plantes qui durent des décennies, voire des siècles</p>
-            </motion.div>
-          </motion.div>
-        </motion.div>
-      </section>
-
-      {/* Avantages */}
-      <section className="py-20 px-4 bg-[var(--background)]">
-        <motion.div
-          className="max-w-4xl mx-auto grid sm:grid-cols-3 gap-8 text-center sm:text-left"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.3 }}
-          variants={{
-            hidden: {},
-            visible: { transition: { staggerChildren: 0.18 } }
-          }}
-        >
-          <motion.div
-            whileHover={{ y: -6, scale: 1.04 }}
-            className="p-6 rounded-xl shadow-sm border border-[var(--border)] bg-[var(--card-bg)]"
-            initial={{ opacity: 0, y: 30 }}
-            variants={{ visible: { opacity: 1, y: 0, transition: { duration: 0.7 } } }}
-          >
-            <h3 className="font-bold text-lg mb-2 text-[var(--card-title)]">Expertise reconnue</h3>
-            <p className="text-[var(--foreground)] flex items-center justify-center sm:justify-start">
-              <span className="mr-2 text-xl">🌵</span>
-              <span>Spécialiste passionné avec plus de 15 ans d'expérience et formation anthropologique.</span>
-            </p>
-          </motion.div>
-          <motion.div
-            whileHover={{ y: -6, scale: 1.04 }}
-            className="p-6 rounded-xl shadow-sm border border-[var(--border)] bg-[var(--card-bg)]"
-            initial={{ opacity: 0, y: 30 }}
-            variants={{ visible: { opacity: 1, y: 0, transition: { duration: 0.7 } } }}
-          >
-            <h3 className="font-bold text-lg mb-2 text-[var(--card-title)]">Spécimens authentiques</h3>
-            <p className="text-[var(--foreground)] flex items-center justify-center sm:justify-start">
-              <span className="mr-2 text-xl">✨</span>
-              <span>Sélection rigoureuse de variétés rares et résistantes, cultivées avec soin.</span>
-            </p>
-          </motion.div>
-          <motion.div
-            whileHover={{ y: -6, scale: 1.04 }}
-            className="p-6 rounded-xl shadow-sm border border-[var(--border)] bg-[var(--card-bg)]"
-            initial={{ opacity: 0, y: 30 }}
-            variants={{ visible: { opacity: 1, y: 0, transition: { duration: 0.7 } } }}
-          >
-            <h3 className="font-bold text-lg mb-2 text-[var(--card-title)]">Ultra-faciles</h3>
-            <p className="text-[var(--foreground)] flex items-center justify-center sm:justify-start">
-              <span className="mr-2 text-xl">🎯</span>
-              <span>Plantes architecturales ultra-faciles à entretenir, parfaites pour tous.</span>
-            </p>
-          </motion.div>
-        </motion.div>
-      </section>
-
-      {/* Nos Catégories */}
-      <section className="py-20 px-4 bg-[var(--accent)]/5">
-        <motion.div
-          className="max-w-6xl mx-auto"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.3 }}
-        >
-          <motion.h2
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.7 }}
-          transition={{ duration: 0.7 }}
-            className="text-3xl sm:text-4xl font-bold text-center mb-4 text-[var(--card-title)]"
-          >
-            Nos Collections
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.7 }}
-            transition={{ delay: 0.2, duration: 0.7 }}
-            className="text-center text-[var(--foreground)] mb-16 max-w-2xl mx-auto"
-          >
-            Explorez nos {categories.length} catégories spécialisées, chacune proposant des spécimens sélectionnés pour leur beauté et leur résistance.
-          </motion.p>
-          
-          <motion.div
-            className="grid grid-cols-2 md:grid-cols-3 gap-6"
-            variants={{
-              hidden: {},
-              visible: { transition: { staggerChildren: 0.1 } }
-            }}
-          >
-            {categories.map((category) => {
-              const categoryProducts = getProductsByCategory(category.id);
-              return (
-                <motion.div
-                  key={category.id}
-                  whileHover={{ y: -4, scale: 1.02 }}
-                  className="bg-[var(--card-bg)] rounded-xl shadow-lg border border-[var(--border)] overflow-hidden group cursor-pointer"
-                  initial={{ opacity: 0, y: 30 }}
-                  variants={{ visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } }}
-                >
-                  <Link href={category.href} className="block">
-                    <div className="p-6 text-center">
-                      <div className="text-4xl mb-4">{category.icon}</div>
-                      <h3 className="text-lg font-bold mb-2 text-[var(--card-title)]">
-                        {category.name}
-                      </h3>
-                      <p className="text-sm text-[var(--foreground)] mb-3">
-                        {category.description}
-                      </p>
-                      <div className="text-sm font-medium text-[var(--accent)]">
-                        {categoryProducts.length} produits
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-        </motion.div>
-      </section>
-
-      {/* Aménagements Clients */}
-      <section className="py-20 px-4 bg-[var(--background)]">
-        <motion.div
-          className="max-w-6xl mx-auto"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.3 }}
-        >
-          <motion.h2
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.7 }}
-            transition={{ duration: 0.7 }}
-            className="text-3xl sm:text-4xl font-bold text-center mb-4 text-[var(--card-title)]"
-          >
-            Réalisations Clients
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.7 }}
-            transition={{ delay: 0.2, duration: 0.7 }}
-            className="text-center text-[var(--foreground)] mb-16 max-w-2xl mx-auto"
-          >
-            Découvrez comment nos cactus et plantes grasses transforment les espaces de nos clients, 
-            créant des aménagements uniques et spectaculaires.
-          </motion.p>
-          
-          <motion.div
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
-            variants={{
-              hidden: {},
-              visible: { transition: { staggerChildren: 0.2 } }
-            }}
-          >
-            {/* Aménagement 1 - Terrasse moderne */}
-            <motion.div
-              className="bg-[var(--card-bg)] rounded-2xl shadow-lg border border-[var(--border)] overflow-hidden group"
-              initial={{ opacity: 0, y: 50 }}
-              variants={{ visible: { opacity: 1, y: 0, transition: { duration: 0.7 } } }}
-            >
-              <div className="aspect-[4/3] relative overflow-hidden bg-gradient-to-br from-orange-100 to-red-100 dark:from-orange-900/20 dark:to-red-900/20">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center text-gray-600 dark:text-gray-400">
-                    <div className="text-6xl mb-4">🌵</div>
-                    <p className="text-sm">Terrasse moderne</p>
-                    <p className="text-xs opacity-70">Aix-en-Provence</p>
-                  </div>
-                </div>
-              </div>
-              <div className="p-6">
-                <h3 className="text-xl font-bold mb-2 text-[var(--card-title)]">
-                  Terrasse Zen
-                </h3>
-                <p className="text-sm text-[var(--foreground)] mb-3">
-                  Aménagement contemporain avec agaves et cactus colonnaires pour créer 
-                  un espace détente unique.
-                </p>
-                <div className="flex gap-2 text-xs">
-                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full">Agaves</span>
-                  <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Cereus</span>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Aménagement 2 - Jardin méditerranéen */}
-            <motion.div
-              className="bg-[var(--card-bg)] rounded-2xl shadow-lg border border-[var(--border)] overflow-hidden group"
-              initial={{ opacity: 0, y: 50 }}
-              variants={{ visible: { opacity: 1, y: 0, transition: { duration: 0.7 } } }}
-            >
-              <div className="aspect-[4/3] relative overflow-hidden bg-gradient-to-br from-green-100 to-blue-100 dark:from-green-900/20 dark:to-blue-900/20">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center text-gray-600 dark:text-gray-400">
-                    <div className="text-6xl mb-4">🏡</div>
-                    <p className="text-sm">Jardin méditerranéen</p>
-                    <p className="text-xs opacity-70">Montpellier</p>
-                  </div>
-                </div>
-              </div>
-              <div className="p-6">
-                <h3 className="text-xl font-bold mb-2 text-[var(--card-title)]">
-                  Oasis Méditerranéenne
-                </h3>
-                <p className="text-sm text-[var(--foreground)] mb-3">
-                  Transformation complète d'un jardin avec yuccas géants et 
-                  collection d'aloés pour un effet désertique.
-                </p>
-                <div className="flex gap-2 text-xs">
-                  <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">Yuccas</span>
-                  <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full">Aloés</span>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Aménagement 3 - Intérieur design */}
-            <motion.div
-              className="bg-[var(--card-bg)] rounded-2xl shadow-lg border border-[var(--border)] overflow-hidden group"
-              initial={{ opacity: 0, y: 50 }}
-              variants={{ visible: { opacity: 1, y: 0, transition: { duration: 0.7 } } }}
-            >
-              <div className="aspect-[4/3] relative overflow-hidden bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center text-gray-600 dark:text-gray-400">
-                    <div className="text-6xl mb-4">🏢</div>
-                    <p className="text-sm">Design intérieur</p>
-                    <p className="text-xs opacity-70">Nice</p>
-                  </div>
-                </div>
-              </div>
-              <div className="p-6">
-                <h3 className="text-xl font-bold mb-2 text-[var(--card-title)]">
-                  Bureau Design
-                </h3>
-                <p className="text-sm text-[var(--foreground)] mb-3">
-                  Intégration de cactus architecturaux dans un espace de travail 
-                  moderne pour un effet wow garanti.
-                </p>
-                <div className="flex gap-2 text-xs">
-                  <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full">Euphorbes</span>
-                  <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full">Pachycereus</span>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-
-          {/* Call to action */}
-          <motion.div
-            className="text-center mt-16"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.7 }}
-            transition={{ delay: 0.4, duration: 0.7 }}
-          >
-            <div className="bg-[var(--accent)]/10 rounded-2xl p-8 max-w-4xl mx-auto">
-              <h3 className="text-2xl font-bold mb-4 text-[var(--card-title)]">
-                Un projet d'aménagement ?
-              </h3>
-              <p className="text-[var(--foreground)] mb-6">
-                Nos spécialistes vous conseillent pour créer l'aménagement parfait. 
-                Visite gratuite et devis personnalisé pour tous projets.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <a
-                  href="tel:+33603425595"
-                  className="inline-block px-8 py-4 bg-[var(--accent)] text-white rounded-full font-semibold transition-all hover:shadow-xl"
-                >
-                  📞 06 03 42 55 95
-                </a>
-                <a
-                  href="mailto:info@atypic-cactus.com"
-                  className="inline-block px-8 py-4 border-2 border-[var(--accent)] text-[var(--accent)] rounded-full font-semibold transition-all hover:bg-[var(--accent)] hover:text-white"
-                >
-                  ✉️ Demander un devis
-                </a>
-              </div>
-            </div>
-          </motion.div>
-        </motion.div>
-      </section>
-
-
     </div>
   );
 }
