@@ -6,7 +6,7 @@ import Link from 'next/link';
 import DarkModeSwitch from './DarkModeSwitch';
 import MegaMenu from './MegaMenu';
 import SearchBar from './SearchBar';
-import RotatingAnnouncements from './RotatingAnnouncements';
+import TopBar from './TopBar';
 import { MagnifyingGlassIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
 import { useCart } from '@/contexts/CartContext';
 
@@ -54,6 +54,9 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
 
   return (
     <>
+      {/* Top Bar */}
+      <TopBar />
+      
       {/* Overlay pour fermer le mega menu */}
       {isMegaMenuOpen && (
         <div 
@@ -113,6 +116,12 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
                   Conseils
                 </Link>
                 <Link
+                  href="/production"
+                  className="px-3 py-2 text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium"
+                >
+                  Production
+                </Link>
+                <Link
                   href="/amenagement"
                   className="px-3 py-2 text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium"
                 >
@@ -163,7 +172,8 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
                 )}
               </Link>
 
-              <RotatingAnnouncements />
+              {/* Espace pour design équilibré */}
+              <div className="hidden lg:block w-32"></div>
               
               <DarkModeSwitch />
             </div>

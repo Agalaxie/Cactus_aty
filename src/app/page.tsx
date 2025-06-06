@@ -3,6 +3,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Header from "../components/Header";
+import TopBar from "../components/TopBar";
 import ProductList from "../components/ProductList";
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
@@ -29,6 +30,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--background)] text-[var(--foreground)]">
+      <TopBar />
       <Header />
 
       {/* Hero Section */}
