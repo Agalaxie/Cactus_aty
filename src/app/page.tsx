@@ -89,84 +89,13 @@ export default function Home() {
 
         <HeroSection totalProducts={totalProducts} />
 
-        {/* Nouveautés 2025 - Version simplifiée sans animations lourdes */}
-        <section className="py-20 px-4 bg-[var(--card-bg)]">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl sm:text-4xl font-bold text-[var(--card-title)] mb-4">
-                Nouveautés 2025
-              </h2>
-              <div className="w-24 h-1 bg-[var(--accent)] mx-auto"></div>
-            </div>
-
-            <div className="grid sm:grid-cols-3 gap-8">
-              <div className="text-center group cursor-pointer">
-                <div className="mb-6 relative overflow-hidden rounded-xl">
-                  <Image
-                    src="/images/nouveaute-1.jpg"
-                    alt="Nouveauté 2025"
-                    width={400}
-                    height={300}
-                    className="w-full h-64 object-cover transition-transform group-hover:scale-105"
-                    loading="lazy"
-                  />
-                </div>
-                <h3 className="text-xl font-semibold text-[var(--card-title)] mb-3">
-                  Collection Résistance
-                </h3>
-                <p className="text-[var(--foreground)] opacity-80">
-                  Nouvelles variétés ultra-résistantes au froid jusqu'à -17°C
-                </p>
-              </div>
-
-              <div className="text-center group cursor-pointer">
-                <div className="mb-6 relative overflow-hidden rounded-xl">
-                  <Image
-                    src="/images/nouveaute-2.jpg"
-                    alt="Nouveauté 2025"
-                    width={400}
-                    height={300}
-                    className="w-full h-64 object-cover transition-transform group-hover:scale-105"
-                    loading="lazy"
-                  />
-                </div>
-                <h3 className="text-xl font-semibold text-[var(--card-title)] mb-3">
-                  Géants du Mexique
-                </h3>
-                <p className="text-[var(--foreground)] opacity-80">
-                  Spécimens exceptionnels directement du Mexique
-                </p>
-              </div>
-
-              <div className="text-center group cursor-pointer">
-                <div className="mb-6 relative overflow-hidden rounded-xl">
-                  <Image
-                    src="/images/nouveaute-3.jpg"
-                    alt="Nouveauté 2025"
-                    width={400}
-                    height={300}
-                    className="w-full h-64 object-cover transition-transform group-hover:scale-105"
-                    loading="lazy"
-                  />
-                </div>
-                <h3 className="text-xl font-semibold text-[var(--card-title)] mb-3">
-                  Aménagements Pros
-                </h3>
-                <p className="text-[var(--foreground)] opacity-80">
-                  Solutions clé en main pour professionnels
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Section produits avec Suspense */}
+        {/* Section produits dynamiques avec Suspense */}
         <Suspense fallback={
           <div className="py-20 text-center">
             <div className="animate-pulse">Chargement des produits...</div>
           </div>
         }>
-          <ProductList limit={8} />
+          <ProductList limit={6} />
         </Suspense>
 
         {/* Newsletter - Version simplifiée */}
