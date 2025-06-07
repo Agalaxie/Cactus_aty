@@ -1,8 +1,6 @@
 'use client';
 import Image from "next/image";
 import Link from "next/link";
-import Header from "../components/Header";
-import TopBar from "../components/TopBar";
 import ProductList from "../components/ProductList";
 import { useEffect, useState, Suspense } from 'react';
 import { supabase } from '../lib/supabase';
@@ -237,9 +235,6 @@ export default function Home() {
   return (
     <LazyMotionWrapper>
       <div className="min-h-screen flex flex-col bg-[var(--background)] text-[var(--foreground)]">
-        <TopBar />
-        <Header />
-
         <HeroSection totalProducts={totalProducts} />
 
         {/* Section produits phares */}

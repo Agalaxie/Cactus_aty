@@ -3,7 +3,6 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
-import Header from '../../components/Header';
 
 interface Article {
   id: string;
@@ -52,9 +51,7 @@ export default function ConseilsPage() {
   ];
 
   return (
-    <div className="bg-[var(--background)] text-[var(--foreground)]">
-      <Header />
-
+    <div className="min-h-screen bg-[var(--background)]">
       {/* Breadcrumb */}
       <div className="py-6 px-4 max-w-6xl mx-auto w-full">
         <div className="flex items-center space-x-2 text-sm">

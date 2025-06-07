@@ -82,6 +82,59 @@ export default function MegaMenu({ isOpen, onClose, onMouseEnter, onMouseLeave }
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Bloquer le scroll de la page quand le menu est ouvert
+  useEffect(() => {
+    if (isOpen) {
+      // Calculer la largeur de la scrollbar pour éviter le décalage
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      
+      // Sauvegarder la position de scroll actuelle
+      const scrollY = window.scrollY;
+      
+      // Bloquer le scroll en compensant la scrollbar
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+      
+      // Compenser aussi pour le header fixe
+      const header = document.querySelector('header');
+      if (header) {
+        header.style.paddingRight = `${scrollbarWidth}px`;
+      }
+    } else {
+      // Restaurer le scroll normal
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.paddingRight = '';
+      
+      // Restaurer le header
+      const header = document.querySelector('header');
+      if (header) {
+        header.style.paddingRight = '';
+      }
+      
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
+    }
+
+    // Nettoyage au démontage du composant
+    return () => {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.paddingRight = '';
+      
+      const header = document.querySelector('header');
+      if (header) {
+        header.style.paddingRight = '';
+      }
+    };
+  }, [isOpen]);
+
   useEffect(() => {
     async function fetchCategoriesWithImages() {
       try {
@@ -150,16 +203,16 @@ export default function MegaMenu({ isOpen, onClose, onMouseEnter, onMouseLeave }
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
-      <m.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.2 }}
-        className="fixed top-[116px] left-0 right-0 w-screen bg-[var(--background)] border-b border-[var(--border)] shadow-xl z-50"
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-      >
+    <div
+      className="fixed left-0 right-0 w-screen bg-white dark:bg-[var(--background)] border-b border-[var(--border)] shadow-xl"
+      style={{ 
+        zIndex: 9999,
+        top: '123px',
+        position: 'fixed'
+      }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
         <div className="px-8 py-8">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-[var(--card-title)] mb-3">
@@ -269,7 +322,6 @@ export default function MegaMenu({ isOpen, onClose, onMouseEnter, onMouseLeave }
             </Link>
           </div>
         </div>
-      </m.div>
-    </AnimatePresence>
+      </div>
   );
 } 

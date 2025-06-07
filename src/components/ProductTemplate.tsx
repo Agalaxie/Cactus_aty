@@ -4,8 +4,7 @@ import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
-import Header from './Header';
-import { useCart } from './CartContext';
+import { useCart } from '../contexts/CartContext';
 
 // Types locaux pour le template
 interface ProductCharacteristics {
@@ -55,7 +54,7 @@ const categories = {
 };
 
 export default function ProductTemplate({ product, showBreadcrumb = true }: ProductTemplateProps) {
-  const { addToCart } = useCart();
+  const { addItem } = useCart();
   const [selectedSize, setSelectedSize] = useState(product.sizes[0]?.id || '');
   const [quantity, setQuantity] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -132,7 +131,6 @@ export default function ProductTemplate({ product, showBreadcrumb = true }: Prod
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
-      <Header />
       {showBreadcrumb && (
         <div className="py-6 px-4 max-w-6xl mx-auto">
           <div className="flex items-center gap-2 text-sm">

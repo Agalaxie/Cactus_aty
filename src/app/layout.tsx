@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from 'next-themes';
 import { CartProvider } from '../contexts/CartContext';
 import Footer from '../components/Footer';
+import Header from '../components/Header';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -51,10 +52,22 @@ export default function RootLayout({
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+        suppressHydrationWarning
       >
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                const theme = localStorage.getItem('theme') || 'light';
+                document.documentElement.classList.toggle('dark', theme === 'dark');
+              } catch {}
+            `,
+          }}
+        />
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <CartProvider>
-            <div className="flex flex-col min-h-screen">
+            <div className="flex flex-col min-h-screen" suppressHydrationWarning>
+              <Header />
               <main className="flex-1">
                 {children}
               </main>

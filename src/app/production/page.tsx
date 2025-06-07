@@ -2,7 +2,6 @@
 
 import { motion } from 'framer-motion';
 import Image from 'next/image';
-import Header from '../../components/Header';
 
 export default function ProductionPage() {
   const services = [
@@ -34,8 +33,6 @@ export default function ProductionPage() {
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
-      <Header />
-      
       <main className="max-w-6xl mx-auto px-4 py-12">
         
         {/* Hero Section */}

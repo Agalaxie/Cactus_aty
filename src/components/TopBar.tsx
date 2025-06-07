@@ -26,7 +26,10 @@ export default function TopBar() {
   }, []);
 
   return (
-    <div className="bg-[var(--accent)] text-white text-sm py-2 relative overflow-hidden">
+    <div 
+      className="bg-[var(--accent)] text-white text-sm py-2 relative overflow-hidden"
+      suppressHydrationWarning
+    >
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center">
           {/* Infos contact - Gauche */}

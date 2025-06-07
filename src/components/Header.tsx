@@ -6,7 +6,8 @@ import Link from 'next/link';
 import DarkModeSwitch from './DarkModeSwitch';
 import MegaMenu from './MegaMenu';
 import SearchBar from './SearchBar';
-import { MagnifyingGlassIcon, ShoppingCartIcon, UserIcon } from '@heroicons/react/24/outline';
+import TopBar from './TopBar';
+import { ShoppingCartIcon, UserIcon } from '@heroicons/react/24/outline';
 import { useCart } from '@/contexts/CartContext';
 
 interface HeaderProps {
@@ -17,6 +18,8 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [closeTimeout, setCloseTimeout] = useState<NodeJS.Timeout | null>(null);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const { totalItems } = useCart();
 
   const handleMouseEnter = () => {
@@ -42,6 +45,41 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
     setIsMegaMenuOpen(false);
   };
 
+  // Gestion du scroll intelligent du header
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const halfPageHeight = windowHeight / 2;
+      
+      // Dans la première moitié de page : header toujours visible et sticky
+      if (currentScrollY <= halfPageHeight) {
+        setIsHeaderVisible(true);
+      } 
+      // Après la première moitié : header visible seulement si scroll vers le haut
+      else {
+        const isScrollingUp = currentScrollY < lastScrollY;
+        setIsHeaderVisible(isScrollingUp);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    // Throttle pour optimiser les performances
+    let timeoutId: NodeJS.Timeout;
+    const throttledHandleScroll = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(handleScroll, 10);
+    };
+
+    window.addEventListener('scroll', throttledHandleScroll, { passive: true });
+    
+    return () => {
+      window.removeEventListener('scroll', throttledHandleScroll);
+      clearTimeout(timeoutId);
+    };
+  }, [lastScrollY]);
+
   useEffect(() => {
     return () => {
       if (closeTimeout) {
@@ -52,15 +90,36 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
 
   return (
     <>
+      {/* Spacer pour compenser le header fixe (TopBar + Header principal) */}
+      <div className="h-[160px]" />
+      
       {/* Overlay pour fermer le mega menu */}
       {isMegaMenuOpen && (
         <div 
-          className="fixed inset-0 bg-black/10 z-40"
+          className="fixed inset-0 bg-black/10 z-[50]"
           onClick={closeMegaMenu}
         />
       )}
       
-      <header className="relative w-full bg-white dark:bg-[var(--background)] shadow-md border-b border-gray-100 dark:border-[var(--border)] z-50">
+      {/* MegaMenu rendu en dehors du header pour éviter les problèmes de stacking context */}
+      {showMegaMenu && (
+        <MegaMenu 
+          isOpen={isMegaMenuOpen} 
+          onClose={closeMegaMenu}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        />
+      )}
+      
+      <header 
+        className={`fixed top-0 w-full bg-white dark:bg-[var(--background)] shadow-md border-b border-gray-100 dark:border-[var(--border)] z-[55] transition-transform duration-300 ease-in-out ${
+          isHeaderVisible ? 'translate-y-0' : '-translate-y-full'
+        }`}
+        suppressHydrationWarning
+      >
+        {/* TopBar intégrée */}
+        <TopBar />
+        
         <div className="max-w-7xl mx-auto w-full px-4">
           {/* Ligne principale du header - Design inspiré FDJ */}
           <div className="flex items-center py-4 gap-6">
@@ -97,13 +156,6 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
-                  
-                  <MegaMenu 
-                    isOpen={isMegaMenuOpen} 
-                    onClose={closeMegaMenu}
-                    onMouseEnter={handleMouseEnter}
-                    onMouseLeave={handleMouseLeave}
-                  />
                 </div>
               )}
               <Link
@@ -126,18 +178,9 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
               </Link>
             </nav>
               
-            {/* Barre de recherche centrale - Style FDJ */}
-            <div className="flex-1 max-w-lg mx-auto">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Quel cactus recherchez-vous ?"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-[var(--border)] rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent bg-gray-50 dark:bg-[var(--card-bg)] text-gray-900 dark:text-[var(--card-title)] placeholder-gray-500 dark:placeholder-gray-400"
-                />
-              </div>
+            {/* Barre de recherche centrale avec SearchBar complet */}
+            <div className="flex-1 max-w-lg mx-auto hidden lg:block">
+              <SearchBar />
             </div>
             
             {/* Groupe d'actions à droite - Simplifié */}

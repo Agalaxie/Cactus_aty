@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import Header from '@/components/Header';
 import { useCart } from '@/contexts/CartContext';
 import { TrashIcon, MinusIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { stripePromise } from '@/lib/stripe-client';
+import { motion } from 'framer-motion';
 
 export default function PanierPage() {
   const { items, totalItems, totalPrice, removeItem, updateQuantity, clearCart } = useCart();
@@ -67,8 +67,6 @@ export default function PanierPage() {
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-[var(--background)]">
-        <Header />
-        
         <div className="max-w-4xl mx-auto px-4 py-8">
           <h1 className="text-3xl font-bold text-[var(--card-title)] mb-8">Mon Panier</h1>
           
@@ -95,8 +93,6 @@ export default function PanierPage() {
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
-      <Header />
-      
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-[var(--card-title)]">Mon Panier</h1>

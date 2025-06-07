@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../lib/supabase';
 import Image from 'next/image';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
+import { m } from 'framer-motion';
 
 interface Product {
   id: number;
@@ -26,12 +27,12 @@ const createSlug = (name: string): string => {
   return name
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Enlever les accents
-    .replace(/[^a-z0-9\s-]/g, '') // Garder seulement lettres, chiffres, espaces et tirets
-    .replace(/\s+/g, '-') // Remplacer espaces par tirets
-    .replace(/-+/g, '-') // Éviter les tirets multiples
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
     .trim()
-    .substring(0, 60); // Limiter la longueur
+    .substring(0, 60);
 };
 
 export default function SearchBar({ onClose, isMobile = false }: SearchBarProps) {
@@ -152,13 +153,8 @@ export default function SearchBar({ onClose, isMobile = false }: SearchBarProps)
 
     const cleanUrl = imageUrl.trim();
     
-    // Si c'est une URL locale (/images/...) ou invalide, utiliser le placeholder
-    if (cleanUrl.startsWith('/images/') || !cleanUrl.startsWith('http')) {
-      return getPlaceholderImage();
-    }
-
-    // Vérifier si c'est une URL HTTPS valide
-    if (cleanUrl.startsWith('https://')) {
+    // Accepter les URLs locales (/images/...) et les URLs HTTPS
+    if (cleanUrl.startsWith('/images/') || cleanUrl.startsWith('https://')) {
       return cleanUrl;
     }
 
@@ -172,7 +168,7 @@ export default function SearchBar({ onClose, isMobile = false }: SearchBarProps)
         <input
           ref={inputRef}
           type="text"
-          placeholder="Rechercher un cactus, agave, yucca..."
+          placeholder="Quel cactus recherchez-vous ?"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -201,7 +197,7 @@ export default function SearchBar({ onClose, isMobile = false }: SearchBarProps)
       {/* Suggestions */}
       <AnimatePresence>
         {isOpen && suggestions.length > 0 && (
-          <motion.div
+          <m.div
             ref={suggestionsRef}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -209,7 +205,7 @@ export default function SearchBar({ onClose, isMobile = false }: SearchBarProps)
             className="absolute z-50 w-full mt-2 bg-[var(--card-bg)] border border-[var(--border)] rounded-lg shadow-lg overflow-hidden"
           >
             {suggestions.map((product, index) => (
-              <motion.div
+              <m.div
                 key={product.id}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -225,6 +221,8 @@ export default function SearchBar({ onClose, isMobile = false }: SearchBarProps)
                     alt={product.name}
                     fill
                     className="object-cover rounded-md"
+                    loading="lazy"
+                    quality={85}
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.src = getPlaceholderImage();
@@ -244,7 +242,7 @@ export default function SearchBar({ onClose, isMobile = false }: SearchBarProps)
                     </p>
                   </div>
                 </div>
-              </motion.div>
+              </m.div>
             ))}
             
             {/* Lien vers tous les résultats */}
@@ -256,31 +254,34 @@ export default function SearchBar({ onClose, isMobile = false }: SearchBarProps)
                 Voir tous les résultats pour "{query}"
               </button>
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 
       {/* Message aucun résultat */}
-      {isOpen && query.length >= 2 && suggestions.length === 0 && !isLoading && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="absolute z-50 w-full mt-2 bg-[var(--card-bg)] border border-[var(--border)] rounded-lg shadow-lg p-4"
-        >
-          <div className="text-center">
-            <div className="text-4xl mb-2 opacity-50">🔍</div>
-            <p className="text-sm text-[var(--foreground)] opacity-75">
-              Aucun résultat pour "{query}"
-            </p>
-            <button
-              onClick={handleSearch}
-              className="mt-2 text-xs text-[var(--accent)] hover:opacity-80"
-            >
-              Rechercher quand même
-            </button>
-          </div>
-        </motion.div>
-      )}
+      <AnimatePresence>
+        {isOpen && query.length >= 2 && suggestions.length === 0 && !isLoading && (
+          <m.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="absolute z-50 w-full mt-2 bg-[var(--card-bg)] border border-[var(--border)] rounded-lg shadow-lg p-4"
+          >
+            <div className="text-center">
+              <div className="text-4xl mb-2 opacity-50">🔍</div>
+              <p className="text-sm text-[var(--foreground)] opacity-75">
+                Aucun résultat pour "{query}"
+              </p>
+              <button
+                onClick={handleSearch}
+                className="mt-2 text-xs text-[var(--accent)] hover:opacity-80"
+              >
+                Rechercher quand même
+              </button>
+            </div>
+          </m.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 } 

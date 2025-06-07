@@ -8,6 +8,22 @@ export default function DebugPage() {
   const [loading, setLoading] = useState(false);
   const [testResults, setTestResults] = useState<any>({});
 
+  const importProducts = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/import-products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const result = await response.json();
+      setTestResults((prev: any) => ({ ...prev, import_products: result }));
+    } catch (error) {
+      setTestResults((prev: any) => ({ ...prev, import_products: { error: (error as Error).message } }));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const runDiagnostics = async () => {
     setLoading(true);
     try {
@@ -110,13 +126,21 @@ export default function DebugPage() {
         </div>
 
         {/* Boutons d'action */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           <button
             onClick={runDiagnostics}
             disabled={loading}
             className="bg-blue-500 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-600 disabled:opacity-50"
           >
             {loading ? '⏳ Test...' : '🔍 Diagnostic Général'}
+          </button>
+          
+          <button
+            onClick={importProducts}
+            disabled={loading}
+            className="bg-yellow-500 text-white px-6 py-3 rounded-lg font-bold hover:bg-yellow-600 disabled:opacity-50"
+          >
+            {loading ? '⏳ Import...' : '📦 Import Produits CSV'}
           </button>
           
           <button
@@ -317,6 +341,33 @@ export default function DebugPage() {
                   </h3>
                   <pre className="text-xs bg-[var(--background)] p-3 rounded overflow-auto">
                     {JSON.stringify(testResults.detailed_email_send, null, 2)}
+                  </pre>
+                </div>
+              )}
+
+              {testResults.import_products && (
+                <div className="border border-[var(--border)] rounded-lg p-4">
+                  <h3 className="font-bold text-[var(--card-title)] mb-2 flex items-center gap-2">
+                    <StatusIcon success={testResults.import_products.success} />
+                    Importation Produits CSV
+                  </h3>
+                  {testResults.import_products.success && (
+                    <div className="mb-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                      <div className="text-green-800 dark:text-green-200 font-bold">
+                        ✅ {testResults.import_products.message}
+                      </div>
+                      {testResults.import_products.statistics && (
+                        <div className="text-green-600 dark:text-green-300 text-sm mt-1 space-y-1">
+                          <div>📊 Lignes analysées: {testResults.import_products.statistics.totalLines}</div>
+                          <div>✅ Lignes valides: {testResults.import_products.statistics.validLines}</div>
+                          <div>❌ Lignes ignorées: {testResults.import_products.statistics.skippedLines}</div>
+                          <div>💾 Produits insérés: {testResults.import_products.statistics.productsInserted}</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <pre className="text-xs bg-[var(--background)] p-3 rounded overflow-auto">
+                    {JSON.stringify(testResults.import_products, null, 2)}
                   </pre>
                 </div>
               )}
