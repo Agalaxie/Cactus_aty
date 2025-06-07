@@ -5,8 +5,6 @@ import { useRouter } from 'next/navigation';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../lib/supabase';
 import Image from 'next/image';
-import { AnimatePresence } from 'framer-motion';
-import { m } from 'framer-motion';
 
 interface Product {
   id: number;
@@ -33,6 +31,35 @@ const createSlug = (name: string): string => {
     .replace(/-+/g, '-')
     .trim()
     .substring(0, 60);
+};
+
+// Fonction pour obtenir l'icône de la catégorie
+const getCategoryIcon = (category: string): string => {
+  const categoryLower = category.toLowerCase();
+  
+  if (categoryLower.includes('cactus') || categoryLower.includes('echinocactus') || categoryLower.includes('cereus')) {
+    return '🌵';
+  }
+  if (categoryLower.includes('agave')) {
+    return '🪴';
+  }
+  if (categoryLower.includes('aloe')) {
+    return '🌿';
+  }
+  if (categoryLower.includes('yucca') || categoryLower.includes('rostrata')) {
+    return '🌾';
+  }
+  if (categoryLower.includes('dasylirion')) {
+    return '🏺';
+  }
+  if (categoryLower.includes('opuntia')) {
+    return '🌵';
+  }
+  if (categoryLower.includes('exceptionnel') || categoryLower.includes('sujet')) {
+    return '⭐';
+  }
+  
+  return '🌱'; // Icône par défaut
 };
 
 export default function SearchBar({ onClose, isMobile = false }: SearchBarProps) {
@@ -151,10 +178,16 @@ export default function SearchBar({ onClose, isMobile = false }: SearchBarProps)
       return getPlaceholderImage();
     }
 
-    const cleanUrl = imageUrl.trim();
+    // Nettoyage approfondi de l'URL
+    const cleanUrl = imageUrl
+      .trim()
+      .replace(/^\s+|\s+$/g, '') // Supprimer espaces début/fin
+      .replace(/[\r\n\t]/g, '') // Supprimer caractères de contrôle
+      .replace(/\s+/g, ' ') // Normaliser les espaces internes
+      .trim();
     
-    // Accepter les URLs locales (/images/...) et les URLs HTTPS
-    if (cleanUrl.startsWith('/images/') || cleanUrl.startsWith('https://')) {
+    // Accepter les URLs locales (/images/...) et les URLs HTTPS/HTTP
+    if (cleanUrl.startsWith('/images/') || cleanUrl.startsWith('https://') || cleanUrl.startsWith('http://')) {
       return cleanUrl;
     }
 
@@ -195,32 +228,32 @@ export default function SearchBar({ onClose, isMobile = false }: SearchBarProps)
       </div>
 
       {/* Suggestions */}
-      <AnimatePresence>
-        {isOpen && suggestions.length > 0 && (
-          <m.div
-            ref={suggestionsRef}
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="absolute z-50 w-full mt-2 bg-[var(--card-bg)] border border-[var(--border)] rounded-lg shadow-lg overflow-hidden"
-          >
+      {isOpen && suggestions.length > 0 && (
+        <div
+          ref={suggestionsRef}
+          className="absolute w-full mt-3 bg-white dark:bg-[var(--card-bg)] border border-[var(--border)] rounded-xl shadow-2xl overflow-hidden backdrop-blur-sm animate-in slide-in-from-top-2 duration-200"
+          style={{ 
+            zIndex: 9999,
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+          }}
+        >
             {suggestions.map((product, index) => (
-              <m.div
+              <div
                 key={product.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: index * 0.05 }}
-                className={`flex items-center p-3 hover:bg-[var(--background)] cursor-pointer transition-colors ${
-                  selectedIndex === index ? 'bg-[var(--background)]' : ''
+                className={`flex items-center p-4 hover:bg-gradient-to-r hover:from-[var(--accent)]/5 hover:to-[var(--accent)]/10 cursor-pointer transition-all duration-200 hover:scale-[1.01] hover:shadow-md border-b border-[var(--border)]/30 last:border-b-0 ${
+                  selectedIndex === index ? 'bg-gradient-to-r from-[var(--accent)]/10 to-[var(--accent)]/20 scale-[1.01]' : ''
                 }`}
                 onClick={() => handleProductSelect(product)}
+                style={{ 
+                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
               >
-                <div className="relative h-12 w-12 flex-shrink-0 mr-3">
+                <div className="relative h-14 w-14 flex-shrink-0 mr-4">
                   <Image
                     src={getValidImageUrl(product.image_url)}
                     alt={product.name}
                     fill
-                    className="object-cover rounded-md"
+                    className="object-cover rounded-xl shadow-lg ring-2 ring-[var(--accent)]/20 hover:ring-[var(--accent)]/40 transition-all duration-200"
                     loading="lazy"
                     quality={85}
                     onError={(e) => {
@@ -228,60 +261,72 @@ export default function SearchBar({ onClose, isMobile = false }: SearchBarProps)
                       target.src = getPlaceholderImage();
                     }}
                   />
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-transparent to-black/5"></div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-[var(--card-title)] truncate">
+                  <p className="font-semibold text-[var(--card-title)] truncate text-base leading-tight mb-1">
                     {product.name}
                   </p>
                   <div className="flex items-center justify-between">
-                    <p className="text-sm text-[var(--foreground)] opacity-75 capitalize">
-                      {product.category.replace('-', ' ')}
-                    </p>
-                    <p className="text-sm font-semibold text-[var(--accent)]">
-                      {product.price > 0 ? `${product.price}€` : 'Sur demande'}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">
+                        {getCategoryIcon(product.category)}
+                      </span>
+                      <p className="text-sm text-[var(--foreground)]/70 capitalize font-medium">
+                        {product.category.replace(/[>-]/g, ' • ').replace(/\s+/g, ' ').trim()}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-[var(--accent)] text-sm">💰</span>
+                      <p className="text-sm font-bold text-[var(--accent)] bg-[var(--accent)]/10 px-2 py-1 rounded-lg">
+                        {product.price > 0 ? `${product.price}€` : 'Sur demande'}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </m.div>
+              </div>
             ))}
             
             {/* Lien vers tous les résultats */}
-            <div className="border-t border-[var(--border)] p-3">
+            <div className="border-t border-[var(--border)]/50 bg-gradient-to-r from-[var(--accent)]/5 to-transparent p-4">
               <button
                 onClick={handleSearch}
-                className="w-full text-left text-sm text-[var(--accent)] hover:opacity-80 font-medium"
+                className="w-full text-left text-sm text-[var(--accent)] hover:text-[var(--accent)]/80 font-semibold flex items-center gap-2 hover:translate-x-1 transition-all duration-200"
               >
-                Voir tous les résultats pour "{query}"
+                <span className="text-base">🔍</span>
+                Voir tous les résultats pour <span className="font-bold">"{query}"</span>
+                <span className="ml-auto text-xs opacity-70">→</span>
               </button>
             </div>
-          </m.div>
+          </div>
         )}
-      </AnimatePresence>
 
       {/* Message aucun résultat */}
-      <AnimatePresence>
-        {isOpen && query.length >= 2 && suggestions.length === 0 && !isLoading && (
-          <m.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="absolute z-50 w-full mt-2 bg-[var(--card-bg)] border border-[var(--border)] rounded-lg shadow-lg p-4"
-          >
-            <div className="text-center">
-              <div className="text-4xl mb-2 opacity-50">🔍</div>
-              <p className="text-sm text-[var(--foreground)] opacity-75">
-                Aucun résultat pour "{query}"
-              </p>
-              <button
-                onClick={handleSearch}
-                className="mt-2 text-xs text-[var(--accent)] hover:opacity-80"
-              >
-                Rechercher quand même
-              </button>
-            </div>
-          </m.div>
-        )}
-      </AnimatePresence>
+      {isOpen && query.length >= 2 && suggestions.length === 0 && !isLoading && (
+        <div
+          className="absolute w-full mt-3 bg-white dark:bg-[var(--card-bg)] border border-[var(--border)] rounded-xl shadow-2xl p-6 animate-in slide-in-from-top-2 duration-200"
+          style={{ 
+            zIndex: 9999,
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+          }}
+        >
+          <div className="text-center">
+            <div className="text-5xl mb-3 opacity-60">🌵</div>
+            <p className="text-base text-[var(--foreground)] font-medium mb-1">
+              Aucun cactus trouvé
+            </p>
+            <p className="text-sm text-[var(--foreground)]/60 mb-4">
+              pour <span className="font-semibold">"{query}"</span>
+            </p>
+            <button
+              onClick={handleSearch}
+              className="px-4 py-2 bg-[var(--accent)]/10 text-[var(--accent)] hover:bg-[var(--accent)]/20 rounded-lg text-sm font-semibold transition-all duration-200 hover:scale-105"
+            >
+              🔍 Rechercher quand même
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

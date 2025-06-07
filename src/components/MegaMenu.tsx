@@ -97,11 +97,22 @@ export default function MegaMenu({ isOpen, onClose, onMouseEnter, onMouseLeave }
       document.body.style.width = '100%';
       document.body.style.paddingRight = `${scrollbarWidth}px`;
       
-      // Compenser aussi pour le header fixe
-      const header = document.querySelector('header');
-      if (header) {
-        header.style.paddingRight = `${scrollbarWidth}px`;
-      }
+      // Compenser pour tous les éléments fixes
+      const fixedElements = document.querySelectorAll([
+        'header',
+        '[style*="position: fixed"]',
+        '[style*="position:fixed"]', 
+        '.fixed',
+        '[class*="fixed"]'
+      ].join(', '));
+      
+      fixedElements.forEach((element: Element) => {
+        const htmlElement = element as HTMLElement;
+        // Ne pas appliquer au MegaMenu lui-même pour éviter les conflits
+        if (!htmlElement.contains(document.querySelector('[data-megamenu]'))) {
+          htmlElement.style.paddingRight = `${scrollbarWidth}px`;
+        }
+      });
     } else {
       // Restaurer le scroll normal
       const scrollY = document.body.style.top;
@@ -110,11 +121,18 @@ export default function MegaMenu({ isOpen, onClose, onMouseEnter, onMouseLeave }
       document.body.style.width = '';
       document.body.style.paddingRight = '';
       
-      // Restaurer le header
-      const header = document.querySelector('header');
-      if (header) {
-        header.style.paddingRight = '';
-      }
+      // Restaurer tous les éléments fixes
+      const fixedElements = document.querySelectorAll([
+        'header',
+        '[style*="position: fixed"]',
+        '[style*="position:fixed"]', 
+        '.fixed',
+        '[class*="fixed"]'
+      ].join(', '));
+      
+      fixedElements.forEach((element: Element) => {
+        (element as HTMLElement).style.paddingRight = '';
+      });
       
       if (scrollY) {
         window.scrollTo(0, parseInt(scrollY || '0') * -1);
@@ -128,10 +146,17 @@ export default function MegaMenu({ isOpen, onClose, onMouseEnter, onMouseLeave }
       document.body.style.width = '';
       document.body.style.paddingRight = '';
       
-      const header = document.querySelector('header');
-      if (header) {
-        header.style.paddingRight = '';
-      }
+      const fixedElements = document.querySelectorAll([
+        'header',
+        '[style*="position: fixed"]',
+        '[style*="position:fixed"]', 
+        '.fixed',
+        '[class*="fixed"]'
+      ].join(', '));
+      
+      fixedElements.forEach((element: Element) => {
+        (element as HTMLElement).style.paddingRight = '';
+      });
     };
   }, [isOpen]);
 
@@ -166,8 +191,15 @@ export default function MegaMenu({ isOpen, onClose, onMouseEnter, onMouseLeave }
             let categoryImage = getCategoryPlaceholder(categoryConfig.name);
             
             if (products && products.length > 0 && products[0].image_url) {
-              const imageUrl = products[0].image_url.trim();
-              if (imageUrl.startsWith('/images/') || imageUrl.startsWith('https://')) {
+              // Nettoyage approfondi de l'URL
+              const imageUrl = products[0].image_url
+                .trim()
+                .replace(/^\s+|\s+$/g, '') // Supprimer espaces début/fin
+                .replace(/[\r\n\t]/g, '') // Supprimer caractères de contrôle
+                .replace(/\s+/g, ' ') // Normaliser les espaces internes
+                .trim();
+              
+              if (imageUrl.startsWith('/images/') || imageUrl.startsWith('https://') || imageUrl.startsWith('http://')) {
                 categoryImage = imageUrl;
               }
             }
@@ -204,6 +236,7 @@ export default function MegaMenu({ isOpen, onClose, onMouseEnter, onMouseLeave }
 
   return (
     <div
+      data-megamenu="true"
       className="fixed left-0 right-0 w-screen bg-white dark:bg-[var(--background)] border-b border-[var(--border)] shadow-xl"
       style={{ 
         zIndex: 9999,

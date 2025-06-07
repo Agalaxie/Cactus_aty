@@ -68,9 +68,22 @@ export async function POST(request: NextRequest) {
         product.category = cleanText(product.category);
         product.image_url = cleanText(product.image_url);
         
-        // Traiter les images multiples - prendre la première
-        if (product.image_url && product.image_url.includes(',')) {
-          product.image_url = product.image_url.split(',')[0].trim();
+        // Nettoyer et traiter les images multiples - prendre la première
+        if (product.image_url) {
+          // Prendre la première image si plusieurs
+          const firstImage = product.image_url.split(',')[0];
+          // Nettoyer complètement l'URL
+          product.image_url = firstImage
+            .trim()
+            .replace(/^\s+|\s+$/g, '') // Supprimer espaces début/fin
+            .replace(/[\r\n\t]/g, '') // Supprimer caractères de contrôle
+            .replace(/\s+/g, ' ') // Normaliser les espaces internes
+            .trim();
+          
+          // Vérifier que l'URL est valide
+          if (!product.image_url.startsWith('http') && !product.image_url.startsWith('/')) {
+            product.image_url = '';
+          }
         }
         
         products.push(product);
@@ -190,5 +203,7 @@ function cleanText(text: string): string {
     .replace(/^["']|["']$/g, '') // Supprimer guillemets de début/fin
     .replace(/\\n/g, '\n') // Convertir \\n en vrais retours à la ligne
     .replace(/&nbsp;/g, ' ') // Remplacer &nbsp; par espaces
+    .replace(/[\r\n\t]/g, ' ') // Supprimer caractères de contrôle
+    .replace(/\s+/g, ' ') // Normaliser les espaces multiples
     .trim();
 } 

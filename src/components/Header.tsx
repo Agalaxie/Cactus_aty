@@ -90,9 +90,6 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
 
   return (
     <>
-      {/* Spacer pour compenser le header fixe (TopBar + Header principal) */}
-      <div className="h-[160px]" />
-      
       {/* Overlay pour fermer le mega menu */}
       {isMegaMenuOpen && (
         <div 
@@ -176,6 +173,12 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
               >
                 Aménagement
               </Link>
+              <Link
+                href="/qui-suis-je"
+                className="text-gray-700 dark:text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium"
+              >
+                Qui suis-je ?
+              </Link>
             </nav>
               
             {/* Barre de recherche centrale avec SearchBar complet */}
@@ -257,6 +260,13 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
                   className="text-gray-700 dark:text-[var(--card-title)] hover:text-[var(--accent)] py-2 font-medium"
                 >
                   Aménagement
+                </Link>
+                <Link
+                  href="/qui-suis-je"
+                  onClick={() => setShowMobileSearch(false)}
+                  className="text-gray-700 dark:text-[var(--card-title)] hover:text-[var(--accent)] py-2 font-medium"
+                >
+                  Qui suis-je ?
                 </Link>
                 <Link
                   href="/espace-client"
