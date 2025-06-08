@@ -20,11 +20,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Atypic Cactus - Spécialiste Cactus et Plantes Grasses",
-  description: "Découvrez notre collection de cactus et plantes grasses exceptionnels. Pépinière professionnelle dans le Roussillon depuis 10 ans.",
-  keywords: "cactus, plantes grasses, pépinière, Roussillon, Vincent Basset, aménagement jardin",
+  description: "Atypic Cactus Vente de gros cactus livraison dans toute la France, Grand choix de yucca, cactus cierges, agaves, aloes, résistants au gel.",
+  keywords: "cactus, plantes grasses, pépinière, Roussillon, Vincent Basset, aménagement jardin, yucca, agave, aloès, livraison, résistance au gel, gros cactus",
   openGraph: {
     title: "Atypic Cactus - Spécialiste Cactus et Plantes Grasses",
-    description: "Découvrez notre collection de cactus et plantes grasses exceptionnels",
+    description: "Atypic Cactus Vente de gros cactus livraison dans toute la France, Grand choix de yucca, cactus cierges, agaves, aloes, résistants au gel.",
     type: "website",
   },
 };

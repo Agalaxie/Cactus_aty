@@ -32,6 +32,12 @@ export default function Footer() {
               <Link href="/conseils" className="text-[var(--accent)] hover:underline">
                 Conseils
               </Link>
+              <Link href="/cgv" className="text-[var(--accent)] hover:underline">
+                CGV
+              </Link>
+              <Link href="/mentions-legales" className="text-[var(--accent)] hover:underline">
+                Mentions légales
+              </Link>
               <a 
                 href="https://www.facebook.com/atypicboutique/?locale=fr_FR" 
                 target="_blank" 

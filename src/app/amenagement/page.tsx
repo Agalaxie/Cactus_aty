@@ -26,6 +26,13 @@ export default function AmenagementPage() {
       description: "Choix d'espèces selon la rusticité du climat local",
       image: "/Sélection de plantes adaptées.jpg",
       localisation: "Toulouse, France"
+    },
+    {
+      id: 4,
+      titre: "Aménagement piscine", 
+      description: "Choix d'espèces selon la rusticité du climat local",
+      image: "/amenagement-piscine-cactus.jpg",
+      localisation: "Perpignan, France"
     }
   ];
 
