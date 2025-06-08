@@ -7,8 +7,9 @@ import DarkModeSwitch from './DarkModeSwitch';
 import MegaMenu from './MegaMenu';
 import SearchBar from './SearchBar';
 import TopBar from './TopBar';
-import { ShoppingCartIcon, UserIcon } from '@heroicons/react/24/outline';
+import { ShoppingCartIcon, UserIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/lib/useAuth';
 
 interface HeaderProps {
   showMegaMenu?: boolean;
@@ -21,6 +22,7 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const { totalItems } = useCart();
+  const { isAuthenticated } = useAuth();
 
   const handleMouseEnter = () => {
     if (closeTimeout) {
@@ -198,6 +200,18 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
                 <span className="text-sm font-medium">Mon Espace</span>
               </Link>
 
+              {/* Lien Admin - Conditionnel */}
+              {isAuthenticated && (
+                <Link
+                  href="/admin"
+                  className="hidden lg:flex items-center space-x-2 p-2 text-gray-600 dark:text-[var(--card-title)] hover:text-[var(--accent)] transition-colors"
+                  title="Administration"
+                >
+                  <Cog6ToothIcon className="h-5 w-5" />
+                  <span className="text-sm font-medium">Admin</span>
+                </Link>
+              )}
+
               {/* Panier */}
               <Link 
                 href="/panier"
@@ -275,6 +289,15 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
                 >
                   Mon Espace
                 </Link>
+                {isAuthenticated && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setShowMobileSearch(false)}
+                    className="text-gray-700 dark:text-[var(--card-title)] hover:text-[var(--accent)] py-2 font-medium"
+                  >
+                    Administration
+                  </Link>
+                )}
                 <div className="pt-2">
                   <DarkModeSwitch />
                 </div>

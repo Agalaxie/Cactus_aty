@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/useAuth';
+import { supabase } from '@/lib/supabase';
 import Header from '@/components/Header';
 
 interface Order {
@@ -48,33 +49,56 @@ export default function EspaceClient() {
   // Récupérer les commandes quand l'utilisateur est connecté
   useEffect(() => {
     if (isAuthenticated && user && !authLoading) {
+      // Vider les commandes précédentes avant de charger les nouvelles
+      setOrders([]);
       fetchOrders();
     } else if (!isAuthenticated && !authLoading) {
       // Vider les commandes si l'utilisateur n'est pas connecté
       setOrders([]);
     }
-  }, [isAuthenticated, user, authLoading]);
+  }, [isAuthenticated, user?.email, authLoading]); // Ajout de user?.email pour détecter le changement d'utilisateur
 
   const fetchOrders = async () => {
+    if (!user?.email) {
+      console.log('Pas d\'email utilisateur disponible');
+      return;
+    }
+
     try {
-      const response = await fetch('/api/user-orders', {
-        credentials: 'include', // Important pour les cookies de session
+      console.log('🔍 Récupération des commandes pour:', user.email);
+      
+      // Récupérer l'access token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        console.log('❌ Pas de token d\'accès disponible');
+        setOrders([]);
+        return;
+      }
+      
+      const response = await fetch('/api/user-orders-by-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'Cache-Control': 'no-cache', // Éviter le cache
+        },
+        body: JSON.stringify({
+          email: user.email,
+          timestamp: Date.now() // Identifiant unique pour éviter le cache
+        })
       });
       
       if (response.ok) {
         const data = await response.json();
-        if (data.success) {
-          setOrders(data.orders);
-        }
-      } else if (response.status === 401) {
-        // Utilisateur non connecté - ne pas afficher d'erreur
-        console.log('Utilisateur non connecté - pas de commandes à récupérer');
-        setOrders([]);
+        console.log('✅ Commandes reçues:', data.orders?.length || 0);
+        setOrders(data.orders || []);
       } else {
         console.error('Erreur lors de la récupération des commandes:', response.status);
+        setOrders([]);
       }
     } catch (error) {
       console.error('Erreur lors de la récupération des commandes:', error);
+      setOrders([]);
     }
   };
 
@@ -132,8 +156,10 @@ export default function EspaceClient() {
 
   const handleLogout = async () => {
     try {
-      await signOut();
+      // Vider les commandes immédiatement
       setOrders([]);
+      await signOut();
+      console.log('🔄 Déconnexion réussie - commandes effacées');
     } catch (err) {
       console.error('Erreur lors de la déconnexion:', err);
     }
@@ -177,6 +203,16 @@ export default function EspaceClient() {
               <p className="text-lg text-[var(--foreground)] opacity-75">
                 {isRegistering ? 'Créez votre compte' : 'Connectez-vous pour accéder à vos commandes'}
               </p>
+              
+              {/* Lien migration pour anciens clients */}
+              <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  <strong>Ancien client WordPress ?</strong>{' '}
+                  <a href="/migration" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
+                    Migrez votre compte ici →
+                  </a>
+                </p>
+              </div>
             </div>
 
             <div className="bg-[var(--card-bg)] p-8 rounded-lg border border-[var(--border)] shadow-lg">
@@ -302,7 +338,12 @@ export default function EspaceClient() {
           </div>
 
           <div className="bg-[var(--card-bg)] p-8 rounded-lg border border-[var(--border)] shadow-lg">
-            <h2 className="text-2xl font-bold text-[var(--card-title)] mb-6">Mes Commandes</h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-[var(--card-title)]">Mes Commandes</h2>
+              <div className="text-sm text-[var(--foreground)] opacity-75">
+                Email: {user?.email}
+              </div>
+            </div>
             
             {orders.length === 0 ? (
               <div className="text-center py-12">

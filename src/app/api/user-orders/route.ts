@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Récupérer les commandes de l'utilisateur (par user_id OU par email)
+    // Récupérer les commandes de l'utilisateur connecté (par email)
     const { data: orders, error } = await supabase
       .from('orders')
       .select(`
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
         created_at,
         updated_at
       `)
-      .or(`user_id.eq.${user.id},customer_email.eq.${user.email}`)
+      .eq('customer_email', user.email)
       .order('created_at', { ascending: false });
 
     if (error) {
