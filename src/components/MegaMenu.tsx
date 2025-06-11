@@ -21,7 +21,7 @@ interface Category {
   image: string;
   count: number;
   dbCategories: string[];
-  products: { id: string; name: string }[];
+  products: { id: string; name: string; image_url?: string }[];
 }
 
 // Fonction pour générer un placeholder SVG par catégorie
@@ -82,6 +82,7 @@ const categoriesConfig: Omit<Category, 'count' | 'image' | 'products'>[] = [
 export default function MegaMenu({ isOpen, onClose, onMouseEnter, onMouseLeave }: MegaMenuProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
 
   // Bloquer le scroll de la page quand le menu est ouvert
   useEffect(() => {
@@ -187,7 +188,7 @@ export default function MegaMenu({ isOpen, onClose, onMouseEnter, onMouseLeave }
             // Récupérer tous les produits de la catégorie pour le catalogue
             const { data: allProducts, error: catalogError } = await supabase
               .from('products')
-              .select('id, name')
+              .select('id, name, image_url')
               .in('category', categoryConfig.dbCategories)
               .limit(8);
 
@@ -222,15 +223,23 @@ export default function MegaMenu({ isOpen, onClose, onMouseEnter, onMouseLeave }
         );
 
         setCategories(categoriesWithData);
+        // Sélectionner la première catégorie par défaut
+        if (categoriesWithData.length > 0) {
+          setSelectedCategory(categoriesWithData[0]);
+        }
       } catch (error) {
         console.error('Erreur lors du chargement des catégories:', error);
         // En cas d'erreur, utiliser des placeholders
-        setCategories(categoriesConfig.map(cat => ({ 
+        const fallbackCategories = categoriesConfig.map(cat => ({ 
           ...cat, 
           count: 0,
           image: getCategoryPlaceholder(cat.name),
           products: []
-        })));
+        }));
+        setCategories(fallbackCategories);
+        if (fallbackCategories.length > 0) {
+          setSelectedCategory(fallbackCategories[0]);
+        }
       } finally {
         setLoading(false);
       }
@@ -256,117 +265,122 @@ export default function MegaMenu({ isOpen, onClose, onMouseEnter, onMouseLeave }
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-        <div className="px-8 py-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {loading ? (
-              // Skeleton pendant le chargement
-              [...Array(6)].map((_, index) => (
-                                                <div key={index} className="p-4 rounded-lg border border-[var(--border)]/30 animate-pulse bg-white/50 dark:bg-gray-800/30">
-                  <div className="flex flex-col space-y-3">
-                    {/* Header skeleton */}
-                    <div className="flex items-center justify-between">
-                      <div className="h-6 bg-[var(--background)] rounded w-24"></div>
-                      <div className="h-6 bg-[var(--background)] rounded-full w-8"></div>
+                <div className="px-8 py-6">
+          <div className="max-w-7xl mx-auto flex">
+            {/* Navigation latérale */}
+            <div className="w-72 pr-8 border-r border-[var(--border)]/30">
+              <h2 className="text-2xl font-bold text-[var(--card-title)] mb-6">Nos Collections</h2>
+              <nav className="space-y-1">
+                {loading ? (
+                  [...Array(6)].map((_, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 rounded-lg animate-pulse">
+                      <div className="h-5 bg-[var(--background)] rounded w-20"></div>
+                      <div className="h-5 bg-[var(--background)] rounded-full w-6"></div>
                     </div>
-                    
-                    {/* Image skeleton */}
-                    <div className="w-full h-40 bg-[var(--background)] rounded-lg"></div>
-                    
-                    {/* Content skeleton */}
-                    <div>
-                      <div className="h-4 bg-[var(--background)] rounded w-full"></div>
-                      <div className="mt-3 pt-2 border-t border-[var(--border)]/30">
-                        <div className="h-3 bg-[var(--background)] rounded w-16 mb-1.5"></div>
-                        <div className="flex gap-1">
-                          <div className="h-5 bg-[var(--background)] rounded w-20"></div>
-                          <div className="h-5 bg-[var(--background)] rounded w-16"></div>
-                          <div className="h-5 bg-[var(--background)] rounded w-12"></div>
-                          <div className="h-5 bg-[var(--background)] rounded w-14"></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              categories.map((category) => (
-                <div
-                  key={category.slug}
-                  className="p-4 rounded-lg border border-[var(--border)]/30 hover:border-[var(--accent)] hover:shadow-lg transition-all hover:scale-102 bg-white/50 dark:bg-gray-800/30"
-                >
-                  <div className="flex flex-col space-y-3">
-                    {/* Header avec nom et compteur */}
-                    <div className="flex items-center justify-between">
-                      <Link
-                        href={`/categorie/${category.slug}`}
-                        onClick={onClose}
-                        className="font-bold text-[var(--card-title)] text-xl hover:text-[var(--accent)] transition-colors"
-                      >
+                  ))
+                ) : (
+                  categories.map((category) => (
+                    <div
+                      key={category.slug}
+                      onMouseEnter={() => setSelectedCategory(category)}
+                      className={`flex items-center justify-between p-3 rounded-lg transition-colors group cursor-pointer ${
+                        selectedCategory?.slug === category.slug 
+                          ? 'bg-[var(--accent)]/10 border-l-2 border-[var(--accent)]' 
+                          : 'hover:bg-[var(--card-bg)]'
+                      }`}
+                      onClick={() => {
+                        window.location.href = `/categorie/${category.slug}`;
+                        onClose();
+                      }}
+                    >
+                      <span className={`transition-colors font-medium ${
+                        selectedCategory?.slug === category.slug 
+                          ? 'text-[var(--accent)]' 
+                          : 'text-[var(--card-title)] group-hover:text-[var(--accent)]'
+                      }`}>
                         {category.name}
-                      </Link>
-                      <span className="text-base bg-[var(--accent)]/20 text-[var(--accent)] px-3 py-1 rounded-full font-bold">
+                      </span>
+                      <span className="text-sm bg-[var(--accent)]/20 text-[var(--accent)] px-2 py-1 rounded-full font-bold">
                         {category.count}
                       </span>
                     </div>
-                    
-                    {/* Image */}
-                    <Link
-                      href={`/categorie/${category.slug}`}
-                      onClick={onClose}
-                      className="w-full h-40 relative rounded-lg overflow-hidden shadow-md block"
-                    >
-                      <Image
-                        src={category.image}
-                        alt={category.name}
-                        fill
-                        className="object-cover hover:scale-110 transition-transform duration-300"
-                        sizes="320px"
-                        loading="lazy"
-                        quality={85}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = getCategoryPlaceholder(category.name);
-                        }}
-                      />
-                    </Link>
-                    
-                    {/* Contenu */}
-                    <div>
-                      <p className="text-sm text-[var(--foreground)] opacity-75 leading-relaxed">
-                        {category.description}
-                      </p>
-                      {category.products.length > 0 && (
-                        <div className="mt-3 pt-2 border-t border-[var(--border)]/30">
-                          <p className="text-xs font-medium text-[var(--card-title)] mb-1.5">Produits disponibles :</p>
-                          <div className="flex flex-wrap gap-1">
-                            {category.products.slice(0, 4).map((product) => (
-                              <Link
-                                key={product.id}
-                                href={`/produit/${product.id}`}
-                                onClick={onClose}
-                                className="text-xs bg-[var(--accent)]/10 text-[var(--accent)] px-2 py-0.5 rounded hover:bg-[var(--accent)]/20 transition-colors truncate max-w-[140px] block"
-                                title={product.name}
-                              >
-                                {product.name.length > 18 ? `${product.name.substring(0, 18)}...` : product.name}
-                              </Link>
-                            ))}
-                            {category.products.length > 4 && (
-                              <Link
-                                href={`/categorie/${category.slug}`}
-                                onClick={onClose}
-                                className="text-xs text-[var(--foreground)] opacity-60 px-2 py-0.5 hover:opacity-80 transition-opacity"
-                              >
-                                +{category.products.length - 4} autres
-                              </Link>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                  ))
+                )}
+              </nav>
+            </div>
+
+            {/* Contenu principal */}
+            <div className="flex-1 pl-8">
+              {selectedCategory ? (
+                <div>
+                  <div className="mb-6">
+                    <h3 className="text-2xl font-bold text-[var(--card-title)] mb-2">{selectedCategory.name}</h3>
+                    <p className="text-[var(--foreground)] opacity-75">{selectedCategory.description}</p>
                   </div>
+
+                                      {selectedCategory.products.length > 0 ? (
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+                        {selectedCategory.products.map((product) => (
+                          <Link
+                            key={product.id}
+                            href={`/produit/${product.id}`}
+                            onClick={onClose}
+                            className="group p-2 hover:bg-[var(--card-bg)] rounded-lg transition-colors"
+                          >
+                            <div className="text-center">
+                              <div className="w-24 h-24 mx-auto mb-2 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                                {product.image_url ? (
+                                  <Image
+                                    src={product.image_url}
+                                    alt={product.name}
+                                    width={96}
+                                    height={96}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement;
+                                      target.style.display = 'none';
+                                      target.nextElementSibling!.classList.remove('hidden');
+                                    }}
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-[var(--accent)]/10 flex items-center justify-center">
+                                    <span className="text-2xl">🌵</span>
+                                  </div>
+                                )}
+                                <div className="w-full h-full bg-[var(--accent)]/10 flex items-center justify-center hidden">
+                                  <span className="text-2xl">🌵</span>
+                                </div>
+                              </div>
+                              <h4 className="font-medium text-[var(--card-title)] group-hover:text-[var(--accent)] transition-colors text-xs leading-tight px-1">
+                                {product.name.length > 20 ? `${product.name.substring(0, 20)}...` : product.name}
+                              </h4>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <div className="text-6xl mb-4 opacity-50">🌱</div>
+                      <p className="text-[var(--foreground)] opacity-75">Aucun produit disponible dans cette catégorie</p>
+                    </div>
+                  )}
                 </div>
-              ))
-            )}
+              ) : loading ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+                  {[...Array(12)].map((_, index) => (
+                    <div key={index} className="animate-pulse p-2">
+                      <div className="w-24 h-24 mx-auto mb-2 bg-[var(--background)] rounded-lg"></div>
+                      <div className="h-3 bg-[var(--background)] rounded w-3/4 mx-auto"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4 opacity-50">🌿</div>
+                  <p className="text-[var(--foreground)] opacity-75">Survolez une catégorie pour voir les produits</p>
+                </div>
+              )}
+            </div>
           </div>
 
 

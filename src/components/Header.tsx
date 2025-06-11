@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { m } from 'framer-motion';
 import DarkModeSwitch from './DarkModeSwitch';
 import MegaMenu from './MegaMenu';
 import SearchBar from './SearchBar';
@@ -124,20 +125,20 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
           <div className="flex items-center py-2 gap-6">
             
             {/* Logo */}
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
               <Link href="/">
                 <Image
                   src="/logo.png"
                   alt="Atypic Cactus"
                   width={240}
                   height={96}
-                  className="h-16 w-auto cursor-pointer"
+                  className="h-16 w-auto cursor-pointer hover:scale-105 transition-transform duration-200"
                 />
               </Link>
             </div>
 
             {/* Navigation - Desktop uniquement */}
-            <nav className="hidden lg:flex items-center space-x-6">
+            <nav className="hidden lg:flex items-center space-x-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
               {showMegaMenu && (
                 <div 
                   className="relative"
@@ -157,11 +158,11 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
                   </button>
                 </div>
               )}
-              <Link
-                href="/conseils"
+                            <Link
+                href="/amenagement"
                 className="text-gray-700 dark:text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium"
               >
-                Conseils
+                Nos Aménagements
               </Link>
               <Link
                 href="/production"
@@ -170,10 +171,10 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
                 Production
               </Link>
               <Link
-                href="/amenagement"
+                href="/conseils"
                 className="text-gray-700 dark:text-[var(--card-title)] hover:text-[var(--accent)] transition-colors font-medium"
               >
-                Aménagement
+                Conseils
               </Link>
               <Link
                 href="/qui-suis-je"
@@ -184,12 +185,12 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
             </nav>
               
             {/* Barre de recherche centrale avec SearchBar complet */}
-            <div className="flex-1 max-w-lg mx-auto hidden lg:block">
+            <div className="flex-1 max-w-lg mx-auto hidden lg:block animate-fade-in" style={{ animationDelay: '0.3s' }}>
               <SearchBar />
             </div>
             
             {/* Groupe d'actions à droite - Simplifié */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 animate-fade-in" style={{ animationDelay: '0.4s' }}>
 
               {/* Profil utilisateur - Desktop uniquement */}
               <Link
@@ -281,6 +282,14 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
                   className="text-gray-700 dark:text-[var(--card-title)] hover:text-[var(--accent)] py-2 font-medium"
                 >
                   Qui suis-je ?
+                </Link>
+                <Link
+                  href="/resistance-au-froid"
+                  onClick={() => setShowMobileSearch(false)}
+                  className="text-gray-700 dark:text-[var(--card-title)] hover:text-[var(--accent)] py-2 font-medium flex items-center space-x-2"
+                >
+                  <span>🌡️</span>
+                  <span>Résistance au froid</span>
                 </Link>
                 <Link
                   href="/espace-client"

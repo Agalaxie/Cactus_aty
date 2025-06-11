@@ -2,19 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { Product } from '../types/product';
 import Image from 'next/image';
 import Link from 'next/link';
 import LazyMotionWrapper from './LazyMotion';
+import ProductBadges from './ProductBadges';
 import { m } from 'framer-motion';
 
-interface Product {
-  id: number;
-  name: string;
-  description: string;
-  price: number;
-  category: string;
-  image_url: string;
-}
+
 
 interface ProductListProps {
   limit?: number;
@@ -134,6 +129,18 @@ export default function ProductList({ limit, category }: ProductListProps) {
                     <h3 className="text-xl font-bold mt-2 mb-3 text-[var(--card-title)]">
                       {product.name}
                     </h3>
+                    
+                    {/* Badges de résistance au froid et taille */}
+                    <div className="mb-3">
+                      <ProductBadges 
+                        product={product}
+                        size="sm"
+                        showColdResistance={true}
+                        showSize={true}
+                        showWinterProtection={true}
+                      />
+                    </div>
+                    
                     <p className="text-sm text-[var(--foreground)] mb-3 line-clamp-2">
                       {product.description}
                     </p>

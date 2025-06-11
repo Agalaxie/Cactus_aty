@@ -6,6 +6,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import Header from '../../../components/Header';
+import ProductFilters from '../../../components/ProductFilters';
+import ProductBadges from '../../../components/ProductBadges';
 import { supabase } from '../../../lib/supabase';
 
 interface Product {
@@ -13,8 +15,17 @@ interface Product {
   name: string;
   description: string;
   price: number;
+  stock_quantity: number;
   category: string;
   image_url: string;
+  // Nouvelles propriétés pour la résistance au froid et taille
+  min_temperature?: number;
+  max_temperature?: number;
+  cold_resistance_zone?: string;
+  winter_protection_needed?: boolean;
+  size_category?: 'petit' | 'moyen' | 'grand';
+  max_height_cm?: number;
+  max_width_cm?: number;
 }
 
 interface Category {
@@ -111,6 +122,10 @@ export default function CategoryPage() {
   
   const [sortBy, setSortBy] = useState<SortOption>('name');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000]);
+  const [filters, setFilters] = useState({
+    minTemperature: null as number | null,
+    sizeCategory: null as string | null,
+  });
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -148,11 +163,21 @@ export default function CategoryPage() {
         const categoryFilters = getCategoryFilters(categoryName);
         
         // Requête pour récupérer les produits de cette catégorie depuis Supabase
-        const { data, error } = await supabase
+        let query = supabase
           .from('products')
           .select('*')
-          .in('category', categoryFilters)
-          .order('name', { ascending: true });
+          .in('category', categoryFilters);
+
+        // Appliquer les filtres de résistance au froid et taille
+        if (filters.minTemperature !== null) {
+          query = query.gte('min_temperature', filters.minTemperature);
+        }
+
+        if (filters.sizeCategory !== null) {
+          query = query.eq('size_category', filters.sizeCategory);
+        }
+
+        const { data, error } = await query.order('name', { ascending: true });
 
         if (error) throw error;
         setProducts(data || []);
@@ -164,7 +189,7 @@ export default function CategoryPage() {
     }
 
     fetchProducts();
-  }, [categoryName]);
+  }, [categoryName, filters]);
 
   const category = categories.find(cat => cat.id === categoryName);
 
@@ -258,32 +283,43 @@ export default function CategoryPage() {
         </div>
       </div>
 
-      {/* Header de catégorie */}
-      <section className="py-12 px-4 bg-[var(--card-bg)] border-b border-[var(--border)]">
-        <div className="max-w-6xl mx-auto text-center">
+      {/* Header de catégorie - compact */}
+      <section className="py-4 px-4 bg-[var(--card-bg)] border-b border-[var(--border)]">
+        <div className="max-w-6xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.4 }}
+            className="flex items-center gap-4"
           >
-            <span className="text-6xl mb-4 block">{category.icon}</span>
-            <h1 className="text-4xl md:text-5xl font-bold text-[var(--card-title)] mb-4">
-              {category.name}
-            </h1>
-            <p className="text-xl text-[var(--foreground)] opacity-75 max-w-2xl mx-auto">
-              {category.description}
-            </p>
-            <div className="mt-6 text-[var(--accent)] font-medium">
-              {filteredAndSortedProducts.length} produit{filteredAndSortedProducts.length > 1 ? 's' : ''} disponible{filteredAndSortedProducts.length > 1 ? 's' : ''}
+            <span className="text-3xl">{category.icon}</span>
+            <div className="flex-1">
+              <h1 className="text-2xl md:text-3xl font-bold text-[var(--card-title)]">
+                {category.name}
+              </h1>
+              <div className="flex items-center gap-4 mt-1">
+                <p className="text-sm text-[var(--foreground)] opacity-75">
+                  {category.description}
+                </p>
+                <span className="text-sm text-[var(--accent)] font-medium">
+                  {filteredAndSortedProducts.length} produit{filteredAndSortedProducts.length > 1 ? 's' : ''}
+                </span>
+              </div>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Filtres et tri */}
-      <section className="py-6 px-4 border-b border-[var(--border)] bg-[var(--card-bg)]">
+      {/* Filtres */}
+      <section className="py-3 px-4 bg-[var(--card-bg)]">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-wrap gap-4 items-center justify-between">
+          <ProductFilters 
+            onFiltersChange={setFilters}
+            currentFilters={filters}
+          />
+          
+          {/* Tri et filtre de prix */}
+          <div className="flex flex-wrap gap-4 items-center justify-between mt-3">
             <div className="flex items-center gap-4">
               <span className="text-sm font-medium text-[var(--card-title)]">Trier par :</span>
               <select
@@ -317,7 +353,7 @@ export default function CategoryPage() {
       </section>
 
       {/* Grille de produits */}
-      <section className="py-12 px-4">
+      <section className="py-6 px-4">
         <div className="max-w-6xl mx-auto">
           {filteredAndSortedProducts.length === 0 ? (
             <div className="text-center py-20">
@@ -373,6 +409,17 @@ export default function CategoryPage() {
                         <h3 className="font-bold text-lg text-[var(--card-title)] mb-1 group-hover:text-[var(--accent)] transition-colors">
                           {product.name}
                         </h3>
+                        
+                        {/* Badges de résistance au froid et taille */}
+                        <div className="mb-3">
+                          <ProductBadges 
+                            product={product}
+                            size="sm"
+                            showColdResistance={true}
+                            showSize={true}
+                            showWinterProtection={true}
+                          />
+                        </div>
                         <p className="text-sm text-[var(--foreground)] opacity-75 mb-4 line-clamp-2">
                           {product.description.substring(0, 100)}...
                         </p>
