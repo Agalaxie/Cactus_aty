@@ -11,9 +11,37 @@ import { FaArrowRight } from 'react-icons/fa';
 // Composant optimisé pour le hero
 function HeroSection({ totalProducts, featuredProducts }: { totalProducts: number, featuredProducts: any[] }) {
   const [current, setCurrent] = useState(0);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [dragStartX, setDragStartX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
   const nbProducts = featuredProducts.length;
   const goNext = () => setCurrent((prev) => (prev + 1) % nbProducts);
   const goPrev = () => setCurrent((prev) => (prev - 1 + nbProducts) % nbProducts);
+
+  // Fonctions pour le drag
+  const handleDragStart = (event: any) => {
+    setIsDragging(true);
+    setDragStartX(event.clientX || event.touches?.[0]?.clientX || 0);
+  };
+
+  const handleDragEnd = (event: any) => {
+    if (!isDragging) return;
+    
+    const currentX = event.clientX || event.changedTouches?.[0]?.clientX || 0;
+    const deltaX = currentX - dragStartX;
+    const threshold = 50; // Seuil minimum pour déclencher le changement
+
+    if (Math.abs(deltaX) > threshold) {
+      if (deltaX > 0) {
+        goPrev(); // Glisser vers la droite = produit précédent
+      } else {
+        goNext(); // Glisser vers la gauche = produit suivant
+      }
+    }
+    
+    setIsDragging(false);
+    setDragStartX(0);
+  };
 
   // Défilement auto
   useEffect(() => {
@@ -24,43 +52,109 @@ function HeroSection({ totalProducts, featuredProducts }: { totalProducts: numbe
     return () => clearInterval(interval);
   }, [nbProducts]);
 
+  // Délai pour déclencher les animations après le montage
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoaded(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <section className="flex flex-col md:flex-row items-center justify-center flex-1 bg-[var(--background)] relative overflow-hidden gap-12 mt-12 mb-12">
-      <div className="max-w-6xl mx-auto w-full flex flex-col md:flex-row items-center justify-between gap-8 px-4">
-        <div className="w-full md:w-7/12 text-left">
+    <section className="flex flex-col md:flex-row items-center justify-center flex-1 bg-[var(--background)] relative overflow-hidden gap-8 mt-8 mb-8">
+              <div className="max-w-7xl mx-auto w-full flex flex-col md:flex-row items-center justify-between gap-6 px-6">
+          <div className="w-full md:w-6/12 text-left">
+          {/* Titre principal */}
           <m.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={isLoaded ? { opacity: 1, y: 0 } : {}}
+            transition={{ 
+              duration: 0.6, 
+              ease: "easeOut"
+            }}
             className="text-3xl sm:text-5xl font-extrabold mb-4 tracking-tight text-[var(--card-title)]"
           >
-            Atypic Cactus
+            Atypic <span className="text-[var(--accent)]">Cactus</span>
           </m.h1>
-          <h2 className="text-xl sm:text-3xl font-bold mb-4 text-[var(--card-title)]">
+
+          {/* Sous-titre */}
+          <m.h2
+            initial={{ opacity: 0, y: 30 }}
+            animate={isLoaded ? { opacity: 1, y: 0 } : {}}
+            transition={{ 
+              duration: 0.6,
+              ease: "easeOut"
+            }}
+            className="text-xl sm:text-3xl font-bold mb-4 text-[var(--card-title)]"
+          >
             Vente de gros cactus, yuccas, agaves et aloès résistants au gel
-          </h2>
-          <p className="text-lg mb-4 text-[var(--foreground)]">
+          </m.h2>
+
+          {/* Description */}
+          <m.p
+            initial={{ opacity: 0, y: 30 }}
+            animate={isLoaded ? { opacity: 1, y: 0 } : {}}
+            transition={{ 
+              duration: 0.6,
+              ease: "easeOut"
+            }}
+            className="text-lg mb-4 text-[var(--foreground)]"
+          >
             Découvrez notre sélection unique de cactus, yuccas, agaves et aloès robustes, adaptés au climat français et livrés partout en France. Profitez de 15 ans d'expérience, d'un large choix de plantes exceptionnelles et de promotions exclusives pour aménager votre jardin ou terrasse avec style et sérénité.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 mb-8">
-            <Link
-              href="/amenagement"
-              className="inline-block px-8 py-4 bg-[var(--accent)] text-white rounded-full font-semibold shadow-lg transition-all hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+          </m.p>
+
+          {/* Boutons */}
+          <m.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={isLoaded ? { opacity: 1, y: 0 } : {}}
+            transition={{ 
+              duration: 0.6,
+              ease: "easeOut"
+            }}
+            className="flex flex-col sm:flex-row gap-4 mb-8"
+          >
+            <m.div
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
-              Aménagement
-            </Link>
-            <Link
-              href="/categorie/cactus"
-              className="inline-block px-8 py-4 border-2 border-[var(--accent)] text-[var(--accent)] rounded-full font-semibold transition-all hover:bg-[var(--accent)] hover:text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+              <Link
+                href="/amenagement"
+                className="inline-block px-8 py-4 bg-[var(--accent)] text-white rounded-full font-semibold shadow-lg transition-all hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+              >
+                Voir les Aménagements
+              </Link>
+            </m.div>
+            
+            <m.div
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
-              Voir les Cactus
-            </Link>
-          </div>
-          <div className="mb-8 flex items-center gap-2">
-            <a
+              <Link
+                href="/categorie/cactus"
+                className="inline-block px-8 py-4 border-2 border-[var(--accent)] text-[var(--accent)] rounded-full font-semibold transition-all hover:bg-[var(--accent)] hover:text-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+              >
+                Voir nos Cactus
+              </Link>
+            </m.div>
+          </m.div>
+
+          {/* Badge Google Reviews */}
+          <m.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={isLoaded ? { opacity: 1, y: 0 } : {}}
+            transition={{ 
+              duration: 0.6,
+              ease: "easeOut"
+            }}
+            className="mb-8 flex items-center gap-2"
+          >
+            <m.a
               href="https://www.google.com/maps/place/Atypic-cactus/@42.765,2.9505,17z/data=!4m8!3m7!1s0x12b05e2e2e2e2e2e:0x123456789abcdef!8m2!3d42.765!4d2.9505!9m1!1b1!16s%2Fg%2F11c5z_2z2z"
               target="_blank"
               rel="noopener noreferrer"
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
               className="inline-flex items-center bg-white/90 rounded-full px-4 py-2 shadow text-sm font-medium hover:scale-105 transition-transform border border-gray-200"
               style={{textDecoration: 'none'}}
             >
@@ -76,63 +170,114 @@ function HeroSection({ totalProducts, featuredProducts }: { totalProducts: numbe
                   <path d="M6.3 14.1L13.5 19.2C15.4 14.7 19.3 11.5 24 11.5C26.6 11.5 28.9 12.4 30.7 13.9L37.1 8.1C33.5 4.9 28.9 2.5 24 2.5C15.2 2.5 7.9 8.7 6.3 14.1Z" fill="#F44336"/>
                 </g>
               </svg>
-            </a>
-          </div>
+            </m.a>
+          </m.div>
         </div>
+
         {/* Carrousel de fiche produit à droite */}
-        <div className="w-full md:w-5/12 flex flex-col items-center justify-center">
+        <m.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={isLoaded ? { opacity: 1, y: 0 } : {}}
+          transition={{ 
+            duration: 0.6,
+            ease: "easeOut"
+          }}
+          className="w-full md:w-6/12 flex flex-col items-center justify-center"
+        >
           <div className="flex items-center gap-4">
             {/* Fiche produit unique avec animation */}
-            <div className="relative w-80 aspect-[4/5] flex flex-col items-stretch">
+            <div className="relative w-96 aspect-[3/4] flex flex-col items-stretch mb-8">
               <AnimatePresence mode="wait">
                 {featuredProducts[current] && (
                   <m.div
                     key={featuredProducts[current].id}
-                    initial={{ opacity: 0, x: 40 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -40 }}
-                    transition={{ duration: 0.4 }}
-                    className="absolute inset-0 flex flex-col items-stretch"
+                    initial={{ opacity: 0, x: 40, rotateY: 15 }}
+                    animate={{ opacity: 1, x: 0, rotateY: 0 }}
+                    exit={{ opacity: 0, x: -40, rotateY: -15 }}
+                    transition={{ 
+                      duration: 0.6,
+                      ease: [0.25, 0.46, 0.45, 0.94]
+                    }}
+                    drag="x"
+                    dragConstraints={{ left: -100, right: 100 }}
+                    dragElastic={0.2}
+                    onDragEnd={(event, info) => {
+                      const threshold = 80;
+                      if (Math.abs(info.offset.x) > threshold) {
+                        if (info.offset.x > 0) {
+                          goPrev();
+                        } else {
+                          goNext();
+                        }
+                      }
+                    }}
+                    className="absolute inset-0 flex flex-col items-stretch cursor-grab active:cursor-grabbing select-none"
                   >
-                    <Link href={`/produit/${featuredProducts[current].name.toLowerCase().replace(/\s+/g, '-')}`}
-                      className="bg-[var(--background)] rounded-2xl shadow-xl border border-[var(--border)] overflow-hidden group cursor-pointer hover:shadow-2xl transition-all duration-300 flex flex-col h-full">
-                      <div className="aspect-square w-full relative overflow-hidden">
-                        <Image
-                          src={featuredProducts[current].image_url || '/cactus-vedette.png'}
-                          alt={featuredProducts[current].name}
-                          fill
-                          className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500"
-                        />
-                        <div className="absolute top-4 left-4 bg-[var(--accent)] text-white px-3 py-1 rounded-full text-xs font-semibold">
-                          ⭐ Promo
+                    <m.div
+                      whileHover={{ 
+                        y: -5, 
+                        rotateY: 2,
+                        scale: 1.01,
+                        boxShadow: "0 15px 30px -8px rgba(0, 0, 0, 0.2)"
+                      }}
+                      transition={{ type: "spring", stiffness: 500, damping: 25, duration: 0.2 }}
+                      className="h-full"
+                    >
+                      <div className="bg-[var(--background)] rounded-2xl shadow-xl border border-[var(--border)] overflow-hidden group hover:shadow-2xl transition-all duration-300 flex flex-col h-full">
+                        <div className="aspect-square w-full relative overflow-hidden">
+                          <Image
+                            src={featuredProducts[current].image_url || '/cactus-vedette.png'}
+                            alt={featuredProducts[current].name}
+                            fill
+                            className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500"
+                            draggable={false}
+                          />
+                          <div className="absolute top-4 left-4 bg-[var(--accent)] text-white px-3 py-1 rounded-full text-xs font-semibold">
+                            ⭐ Promo
+                          </div>
+                        </div>
+                        <div className="p-4 flex-1 flex flex-col justify-between">
+                          <h3 className="text-lg font-bold text-[var(--card-title)] mb-1">{featuredProducts[current].name}</h3>
+                          <p className="text-xs text-[var(--foreground)] mb-2 line-clamp-2 opacity-80">{featuredProducts[current].description}</p>
+                          <div className="flex items-center justify-between mt-auto">
+                            <span className="text-lg font-bold text-[var(--accent)]">{featuredProducts[current].price}€</span>
+                            <Link 
+                              href={`/produit/${featuredProducts[current].name.toLowerCase().replace(/\s+/g, '-')}`}
+                              className="px-3 py-1 bg-[var(--accent)] text-white rounded-full text-xs font-semibold hover:bg-opacity-90 transition-colors z-10"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Découvrir
+                            </Link>
+                          </div>
                         </div>
                       </div>
-                      <div className="p-6 flex-1 flex flex-col justify-between">
-                        <h3 className="text-lg font-bold text-[var(--card-title)] mb-1">{featuredProducts[current].name}</h3>
-                        <p className="text-xs text-[var(--foreground)] mb-2 line-clamp-2 opacity-80">{featuredProducts[current].description}</p>
-                        <div className="flex items-center justify-between mt-auto">
-                          <span className="text-lg font-bold text-[var(--accent)]">{featuredProducts[current].price}€</span>
-                          <span className="px-3 py-1 bg-[var(--accent)] text-white rounded-full text-xs font-semibold">Découvrir</span>
-                        </div>
-                      </div>
-                    </Link>
+                    </m.div>
                   </m.div>
                 )}
               </AnimatePresence>
             </div>
           </div>
+
           {/* Barre de progression façon Instagram */}
           {nbProducts > 1 && (
-            <div className="flex gap-1 w-full max-w-xs mt-8">
+            <m.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={isLoaded ? { opacity: 1, y: 0 } : {}}
+              transition={{ 
+                duration: 0.6,
+                ease: "easeOut"
+              }}
+              className="flex gap-1 w-full max-w-sm mt-3"
+            >
               {featuredProducts.map((_, idx) => (
                 <div
                   key={idx}
                   className={`h-1 flex-1 rounded-full ${idx === current ? 'bg-[var(--accent)]' : 'bg-[var(--accent)]/30'} transition-all`}
                 />
               ))}
-            </div>
+            </m.div>
           )}
-        </div>
+        </m.div>
       </div>
     </section>
   );
@@ -142,6 +287,7 @@ function HeroSection({ totalProducts, featuredProducts }: { totalProducts: numbe
 function FeaturedProducts() {
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [inView, setInView] = useState(false);
 
   useEffect(() => {
     async function fetchFeaturedProducts() {
@@ -171,6 +317,25 @@ function FeaturedProducts() {
     }
 
     fetchFeaturedProducts();
+  }, []);
+
+  // Intersection Observer pour déclencher les animations au scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+        }
+      },
+      { threshold: 0.2 }
+    );
+
+    const section = document.getElementById('featured-products');
+    if (section) {
+      observer.observe(section);
+    }
+
+    return () => observer.disconnect();
   }, []);
 
   const getPlaceholderImage = () => {
@@ -205,7 +370,7 @@ function FeaturedProducts() {
 
   if (loading) {
     return (
-      <section className="py-20 px-4 bg-[var(--card-bg)]">
+      <section id="featured-products" className="py-20 px-4 bg-[var(--card-bg)]">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-[var(--card-title)] mb-4">
@@ -214,7 +379,11 @@ function FeaturedProducts() {
             <div className="w-24 h-1 bg-[var(--accent)] mx-auto"></div>
           </div>
           <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--accent)]"></div>
+            <m.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--accent)]"
+            />
           </div>
         </div>
       </section>
@@ -222,25 +391,43 @@ function FeaturedProducts() {
   }
 
   return (
-    <section className="py-20 px-4 bg-[var(--card-bg)]">
+    <section id="featured-products" className="py-20 px-4 bg-[var(--card-bg)]">
       <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-16">
+        {/* Titre */}
+        <m.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="text-center mb-16"
+        >
           <h2 className="text-3xl sm:text-4xl font-bold text-[var(--card-title)] mb-4">
             ⭐ Nos Produits Phares
           </h2>
-          <div className="w-24 h-1 bg-[var(--accent)] mx-auto mb-4"></div>
+          <div className="w-24 h-1 bg-[var(--accent)] mx-auto mb-4" />
           <p className="text-lg text-[var(--foreground)] opacity-80 max-w-2xl mx-auto">
             Découvrez notre sélection de cactus d'exception, choisis pour leur beauté et leur résistance
           </p>
-        </div>
+        </m.div>
 
+        {/* Grille de produits */}
         <div className="grid sm:grid-cols-3 gap-8">
           {featuredProducts.slice(0, 3).map((product, index) => (
             <m.div
               key={product.id}
               initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.2, duration: 0.6 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ 
+                duration: 0.6,
+                ease: "easeOut"
+              }}
+                                                         whileHover={{ 
+                y: -8, 
+                scale: 1.02,
+                rotateY: 2,
+                boxShadow: "0 20px 40px -10px rgba(0, 0, 0, 0.2)",
+                transition: { type: "spring", stiffness: 600, damping: 30, duration: 0.2 }
+              }}
+              whileTap={{ scale: 0.98 }}
               className="bg-[var(--background)] rounded-2xl shadow-xl border border-[var(--border)] overflow-hidden group cursor-pointer hover:shadow-2xl transition-all duration-300"
             >
               <Link href={`/produit/${createSlug(product.name)}`} className="block">
@@ -258,9 +445,9 @@ function FeaturedProducts() {
                       target.src = getPlaceholderImage();
                     }}
                   />
-                  <div className="absolute top-4 left-4 bg-[var(--accent)] text-white px-3 py-1 rounded-full text-sm font-semibold">
-                    ⭐ Phare
-                  </div>
+                                     <div className="absolute top-4 left-4 bg-[var(--accent)] text-white px-3 py-1 rounded-full text-sm font-semibold">
+                     ⭐ Phare
+                   </div>
                 </div>
                 <div className="p-6">
                   <span className="text-sm font-medium text-[var(--accent)] uppercase tracking-wide">
@@ -276,9 +463,14 @@ function FeaturedProducts() {
                     <p className="text-2xl font-bold text-[var(--accent)]">
                       {product.price}€
                     </p>
-                    <div className="px-4 py-2 bg-[var(--accent)] text-white rounded-full text-sm font-semibold group-hover:bg-opacity-90 transition-colors">
+                    <m.div
+                      whileHover={{ scale: 1.05, rotate: 2 }}
+                      whileTap={{ scale: 0.95 }}
+                      transition={{ type: "spring", stiffness: 600, damping: 30, duration: 0.15 }}
+                      className="px-4 py-2 bg-[var(--accent)] text-white rounded-full text-sm font-semibold group-hover:bg-opacity-90 transition-colors"
+                    >
                       Découvrir
-                    </div>
+                    </m.div>
                   </div>
                 </div>
               </Link>
@@ -286,14 +478,26 @@ function FeaturedProducts() {
           ))}
         </div>
 
-        <div className="text-center mt-12">
-          <Link
-            href="/categorie/cactus"
-            className="inline-block px-8 py-4 bg-[var(--accent)] text-white rounded-full font-semibold shadow-lg transition-all hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+        {/* Bouton CTA */}
+        <m.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="text-center mt-12"
+        >
+          <m.div
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
-            Voir tous nos produits
-          </Link>
-        </div>
+            <Link
+              href="/categorie/cactus"
+              className="inline-block px-8 py-4 bg-[var(--accent)] text-white rounded-full font-semibold shadow-lg transition-all hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            >
+              Voir tous nos produits
+            </Link>
+          </m.div>
+        </m.div>
       </div>
     </section>
   );
@@ -519,108 +723,228 @@ export default function Home() {
         <AmenagementSection />
 
         {/* Sections catégories produits */}
-        <section className="py-16 px-2 bg-[var(--background)]">
-          <div className="max-w-7xl mx-auto">
-            {/* Agaves premium */}
-            <div className="mb-20">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-3xl">🌱</span>
-                <h2 className="text-3xl sm:text-4xl font-extrabold text-[var(--card-title)]">Agaves</h2>
+        <section className="py-8 px-2 bg-[var(--background)]">
+          <div className="max-w-7xl mx-auto space-y-16">
+            {/* Agaves */}
+            <div className="relative">
+              <div className="text-center mb-8">
+                <m.div
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  className="flex items-center justify-center gap-3 mb-2"
+                >
+                  <m.span
+                    initial={{ scale: 0, rotate: -180 }}
+                    whileInView={{ scale: 1, rotate: 0 }}
+                    transition={{ duration: 0.8, delay: 0.2, type: "spring", stiffness: 300 }}
+                    viewport={{ once: true }}
+                    className="text-2xl"
+                  >
+                    🌱
+                  </m.span>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-[var(--card-title)]">Collection Agaves</h2>
+                </m.div>
+                <m.div
+                  initial={{ width: 0 }}
+                  whileInView={{ width: 64 }}
+                  transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+                  viewport={{ once: true }}
+                  className="h-0.5 bg-[var(--accent)] mx-auto"
+                />
               </div>
-              <p className="text-lg text-[var(--foreground)] opacity-80 mb-6">Des agaves robustes et graphiques pour un jardin d'exception.</p>
-              <div className="rounded-3xl bg-[var(--card-bg)] shadow-2xl p-8 mb-6">
-                <ProductList limit={4} category="Agaves" />
-              </div>
-              <div className="flex justify-end">
-                <Link href="/categorie/agaves" className="inline-flex items-center gap-2 px-8 py-4 bg-[var(--accent)] text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all text-lg">
-                  Voir toute la collection <span style={{ marginLeft: 8 }}><FaArrowRight size={20} /></span>
-                </Link>
-              </div>
+              <ProductList limit={4} category="Agaves" />
+              {/* Séparateur subtil */}
+              <div className="absolute bottom-[-2rem] left-1/2 transform -translate-x-1/2 w-24 h-px bg-gradient-to-r from-transparent via-[var(--border)] to-transparent"></div>
             </div>
-            {/* Aloès premium */}
-            <div className="mb-20">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-3xl">🪴</span>
-                <h2 className="text-3xl sm:text-4xl font-extrabold text-[var(--card-title)]">Aloès</h2>
+            {/* Aloès */}
+            <div className="relative">
+              <div className="text-center mb-8">
+                <m.div
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  className="flex items-center justify-center gap-3 mb-2"
+                >
+                  <m.span
+                    initial={{ scale: 0, rotate: -180 }}
+                    whileInView={{ scale: 1, rotate: 0 }}
+                    transition={{ duration: 0.8, delay: 0.2, type: "spring", stiffness: 300 }}
+                    viewport={{ once: true }}
+                    className="text-2xl"
+                  >
+                    🪴
+                  </m.span>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-[var(--card-title)]">Collection Aloès</h2>
+                </m.div>
+                <m.div
+                  initial={{ width: 0 }}
+                  whileInView={{ width: 64 }}
+                  transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+                  viewport={{ once: true }}
+                  className="h-0.5 bg-[var(--accent)] mx-auto"
+                />
               </div>
-              <p className="text-lg text-[var(--foreground)] opacity-80 mb-6">Des aloès résistants et élégants pour une touche exotique.</p>
-              <div className="rounded-3xl bg-[var(--card-bg)] shadow-2xl p-8 mb-6">
-                <ProductList limit={4} category="Aloès" />
-              </div>
-              <div className="flex justify-end">
-                <Link href="/categorie/aloes" className="inline-flex items-center gap-2 px-8 py-4 bg-[var(--accent)] text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all text-lg">
-                  Voir toute la collection <span style={{ marginLeft: 8 }}><FaArrowRight size={20} /></span>
-                </Link>
-              </div>
+              <ProductList limit={4} category="Aloès" />
+              {/* Séparateur subtil */}
+              <div className="absolute bottom-[-2rem] left-1/2 transform -translate-x-1/2 w-24 h-px bg-gradient-to-r from-transparent via-[var(--border)] to-transparent"></div>
             </div>
-            {/* Cactus premium */}
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-3xl">🌵</span>
-                <h2 className="text-3xl sm:text-4xl font-extrabold text-[var(--card-title)]">Cactus</h2>
+            {/* Cactus */}
+            <div>
+              <div className="text-center mb-8">
+                <m.div
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  className="flex items-center justify-center gap-3 mb-2"
+                >
+                  <m.span
+                    initial={{ scale: 0, rotate: -180 }}
+                    whileInView={{ scale: 1, rotate: 0 }}
+                    transition={{ duration: 0.8, delay: 0.2, type: "spring", stiffness: 300 }}
+                    viewport={{ once: true }}
+                    className="text-2xl"
+                  >
+                    🌵
+                  </m.span>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-[var(--card-title)]">Collection Cactus</h2>
+                </m.div>
+                <m.div
+                  initial={{ width: 0 }}
+                  whileInView={{ width: 64 }}
+                  transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+                  viewport={{ once: true }}
+                  className="h-0.5 bg-[var(--accent)] mx-auto"
+                />
               </div>
-              <p className="text-lg text-[var(--foreground)] opacity-80 mb-6">Notre sélection de cactus rares et majestueux pour sublimer vos espaces.</p>
-              <div className="rounded-3xl bg-[var(--card-bg)] shadow-2xl p-8 mb-6">
-                <ProductList limit={4} category="Cactus" />
-              </div>
-              <div className="flex justify-end">
-                <Link href="/categorie/cactus" className="inline-flex items-center gap-2 px-8 py-4 bg-[var(--accent)] text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all text-lg">
-                  Voir toute la collection <span style={{ marginLeft: 8 }}><FaArrowRight size={20} /></span>
-                </Link>
-              </div>
+              <ProductList limit={4} category="Cactus" />
             </div>
           </div>
         </section>
 
         {/* Newsletter - Version simplifiée */}
-        <section className="py-20 px-4 bg-[var(--background)]">
+        <section className="py-12 px-4 bg-[var(--background)]">
           <div className="max-w-6xl mx-auto flex flex-col items-center justify-center text-center">
-            <div className="max-w-2xl w-full bg-[var(--card-bg)] rounded-2xl shadow-xl p-8 flex flex-col items-center">
-              <h2 className="text-3xl font-bold text-[var(--card-title)] mb-4">
+            <m.div
+              initial={{ opacity: 0, y: 50, scale: 0.9 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              viewport={{ once: true, margin: "-100px" }}
+              className="max-w-2xl w-full bg-[var(--card-bg)] rounded-2xl shadow-xl p-8 flex flex-col items-center"
+            >
+              <m.h2
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+                viewport={{ once: true }}
+                className="text-3xl font-bold text-[var(--card-title)] mb-4"
+              >
                 Restez informé
-              </h2>
-              <p className="text-lg text-[var(--foreground)] opacity-80 mb-8">
+              </m.h2>
+              <m.p
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
+                viewport={{ once: true }}
+                className="text-lg text-[var(--foreground)] opacity-80 mb-8"
+              >
                 Recevez nos conseils d'expert et les dernières nouveautés
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+              </m.p>
+              <m.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.6, ease: "easeOut" }}
+                viewport={{ once: true }}
+                className="flex flex-col sm:flex-row gap-4 w-full max-w-md"
+              >
                 <input
                   type="email"
                   placeholder="Votre email"
                   className="flex-1 px-4 py-3 rounded-full border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 />
-                <button className="px-6 py-3 bg-[var(--accent)] text-white rounded-full font-semibold hover:bg-opacity-90 transition-colors">
+                <m.button
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  className="px-6 py-3 bg-[var(--accent)] text-white rounded-full font-semibold hover:bg-opacity-90 transition-colors"
+                >
                   S'abonner
-                </button>
-              </div>
-            </div>
+                </m.button>
+              </m.div>
+            </m.div>
           </div>
         </section>
 
-        {/* Section contact - Version simplifiée sans animations */}
-        <section className="py-8 px-4 bg-emerald-600 dark:bg-emerald-700">
+        {/* Section contact - Version avec animations */}
+        <section className="py-6 px-4 bg-emerald-600 dark:bg-emerald-700">
           <div className="max-w-6xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center text-white">
-              <div className="flex items-center justify-center gap-3">
-                <span className="text-2xl">🚚</span>
+              <m.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
+                viewport={{ once: true, margin: "-50px" }}
+                className="flex items-center justify-center gap-3"
+              >
+                <m.span
+                  initial={{ scale: 0, rotate: -90 }}
+                  whileInView={{ scale: 1, rotate: 0 }}
+                  transition={{ duration: 0.6, delay: 0.3, type: "spring", stiffness: 300 }}
+                  viewport={{ once: true }}
+                  className="text-2xl"
+                >
+                  🚚
+                </m.span>
                 <div className="text-left">
                   <div className="font-semibold">Livraison 24H</div>
                   <div className="text-sm opacity-90">Nouveau service transporteur</div>
                 </div>
-              </div>
-              <div className="flex items-center justify-center gap-3">
-                <span className="text-2xl">🌿</span>
+              </m.div>
+              <m.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+                viewport={{ once: true, margin: "-50px" }}
+                className="flex items-center justify-center gap-3"
+              >
+                <m.span
+                  initial={{ scale: 0, rotate: -90 }}
+                  whileInView={{ scale: 1, rotate: 0 }}
+                  transition={{ duration: 0.6, delay: 0.4, type: "spring", stiffness: 300 }}
+                  viewport={{ once: true }}
+                  className="text-2xl"
+                >
+                  🌿
+                </m.span>
                 <div className="text-left">
                   <div className="font-semibold">Pépinière ouverte</div>
                   <div className="text-sm opacity-90">Toute la semaine</div>
                 </div>
-              </div>
-              <div className="flex items-center justify-center gap-3">
-                <span className="text-2xl">📞</span>
+              </m.div>
+              <m.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
+                viewport={{ once: true, margin: "-50px" }}
+                className="flex items-center justify-center gap-3"
+              >
+                <m.span
+                  initial={{ scale: 0, rotate: -90 }}
+                  whileInView={{ scale: 1, rotate: 0 }}
+                  transition={{ duration: 0.6, delay: 0.5, type: "spring", stiffness: 300 }}
+                  viewport={{ once: true }}
+                  className="text-2xl"
+                >
+                  📞
+                </m.span>
                 <div className="text-left">
                   <div className="font-semibold">06 03 42 55 95</div>
                   <div className="text-sm opacity-90">Conseil expert</div>
                 </div>
-              </div>
+              </m.div>
             </div>
           </div>
         </section>

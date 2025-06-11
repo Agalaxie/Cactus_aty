@@ -121,17 +121,17 @@ export default function Header({ showMegaMenu = true }: HeaderProps) {
         
         <div className="max-w-7xl mx-auto w-full px-4">
           {/* Ligne principale du header - Design inspiré FDJ */}
-          <div className="flex items-center py-4 gap-6">
+          <div className="flex items-center py-2 gap-6">
             
-            {/* Logo - Plus compact */}
+            {/* Logo */}
             <div className="flex-shrink-0">
               <Link href="/">
                 <Image
                   src="/logo.png"
                   alt="Atypic Cactus"
-                  width={160}
-                  height={64}
-                  className="h-12 w-auto cursor-pointer"
+                  width={240}
+                  height={96}
+                  className="h-16 w-auto cursor-pointer"
                 />
               </Link>
             </div>

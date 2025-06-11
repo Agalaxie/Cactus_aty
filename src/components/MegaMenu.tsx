@@ -21,6 +21,7 @@ interface Category {
   image: string;
   count: number;
   dbCategories: string[];
+  products: { id: string; name: string }[];
 }
 
 // Fonction pour générer un placeholder SVG par catégorie
@@ -39,7 +40,7 @@ const getCategoryPlaceholder = (categoryName: string) => {
   return `data:image/svg+xml,%3csvg width='400' height='400' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='400' height='400' fill='${color.bg}'/%3e%3cg transform='translate(200%2c200)'%3e%3ccircle cx='0' cy='-30' r='35' fill='${color.accent}'/%3e%3cpath d='M-8%2c-60 Q0%2c-75 8%2c-60 L5%2c-25 L-5%2c-25 Z' fill='${color.accent}'/%3e%3cpath d='M-25%2c-40 Q-35%2c-55 -15%2c-45 L-12%2c-20 L-18%2c-20 Z' fill='${color.accent}'/%3e%3cpath d='M25%2c-40 Q35%2c-55 15%2c-45 L18%2c-20 L12%2c-20 Z' fill='${color.accent}'/%3e%3cellipse cx='0' cy='30' rx='50' ry='25' fill='%23422006'/%3e%3c/g%3e%3ctext x='200' y='370' text-anchor='middle' fill='white' font-family='Arial%2c sans-serif' font-size='24' font-weight='bold'%3e${categoryName}%3c/text%3e%3c/svg%3e`;
 };
 
-const categoriesConfig: Omit<Category, 'count' | 'image'>[] = [
+const categoriesConfig: Omit<Category, 'count' | 'image' | 'products'>[] = [
   {
     name: 'Agaves',
     slug: 'agaves',
@@ -174,14 +175,21 @@ export default function MegaMenu({ isOpen, onClose, onMouseEnter, onMouseLeave }
               .select('*', { count: 'exact', head: true })
               .in('category', categoryConfig.dbCategories);
 
-            // Récupérer un produit représentatif avec image
+            // Récupérer un produit représentatif avec image ET la liste des produits
             const { data: products, error: imageError } = await supabase
               .from('products')
-              .select('image_url')
+              .select('id, name, image_url')
               .in('category', categoryConfig.dbCategories)
               .not('image_url', 'is', null)
               .not('image_url', 'eq', '')
-              .limit(1);
+              .limit(6);
+
+            // Récupérer tous les produits de la catégorie pour le catalogue
+            const { data: allProducts, error: catalogError } = await supabase
+              .from('products')
+              .select('id, name')
+              .in('category', categoryConfig.dbCategories)
+              .limit(8);
 
             if (countError) {
               console.error(`Erreur pour la catégorie ${categoryConfig.name}:`, countError);
@@ -207,7 +215,8 @@ export default function MegaMenu({ isOpen, onClose, onMouseEnter, onMouseLeave }
             return { 
               ...categoryConfig, 
               count: count || 0,
-              image: categoryImage
+              image: categoryImage,
+              products: allProducts || []
             };
           })
         );
@@ -219,7 +228,8 @@ export default function MegaMenu({ isOpen, onClose, onMouseEnter, onMouseLeave }
         setCategories(categoriesConfig.map(cat => ({ 
           ...cat, 
           count: 0,
-          image: getCategoryPlaceholder(cat.name)
+          image: getCategoryPlaceholder(cat.name),
+          products: []
         })));
       } finally {
         setLoading(false);
@@ -246,49 +256,71 @@ export default function MegaMenu({ isOpen, onClose, onMouseEnter, onMouseLeave }
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-        <div className="px-8 py-8">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-[var(--card-title)] mb-3">
-              Nos Collections
-            </h2>
-            <p className="text-[var(--foreground)] opacity-75 text-lg">
-              Découvrez notre sélection de plantes architecturales exceptionnelles
-            </p>
-          </div>
-
+        <div className="px-8 py-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {loading ? (
               // Skeleton pendant le chargement
               [...Array(6)].map((_, index) => (
-                <div key={index} className="p-6 rounded-lg border-2 border-[var(--border)] animate-pulse">
-                  <div className="flex items-center gap-4">
-                    <div className="w-24 h-24 bg-[var(--background)] rounded-lg"></div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="h-6 bg-[var(--background)] rounded w-24"></div>
-                        <div className="h-6 bg-[var(--background)] rounded-full w-8"></div>
-                      </div>
+                                                <div key={index} className="p-4 rounded-lg border border-[var(--border)]/30 animate-pulse bg-white/50 dark:bg-gray-800/30">
+                  <div className="flex flex-col space-y-3">
+                    {/* Header skeleton */}
+                    <div className="flex items-center justify-between">
+                      <div className="h-6 bg-[var(--background)] rounded w-24"></div>
+                      <div className="h-6 bg-[var(--background)] rounded-full w-8"></div>
+                    </div>
+                    
+                    {/* Image skeleton */}
+                    <div className="w-full h-40 bg-[var(--background)] rounded-lg"></div>
+                    
+                    {/* Content skeleton */}
+                    <div>
                       <div className="h-4 bg-[var(--background)] rounded w-full"></div>
+                      <div className="mt-3 pt-2 border-t border-[var(--border)]/30">
+                        <div className="h-3 bg-[var(--background)] rounded w-16 mb-1.5"></div>
+                        <div className="flex gap-1">
+                          <div className="h-5 bg-[var(--background)] rounded w-20"></div>
+                          <div className="h-5 bg-[var(--background)] rounded w-16"></div>
+                          <div className="h-5 bg-[var(--background)] rounded w-12"></div>
+                          <div className="h-5 bg-[var(--background)] rounded w-14"></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               ))
             ) : (
               categories.map((category) => (
-                <Link
+                <div
                   key={category.slug}
-                  href={`/categorie/${category.slug}`}
-                  onClick={onClose}
-                  className="block p-6 rounded-lg border-2 border-[var(--border)] hover:border-[var(--accent)] hover:shadow-lg transition-all hover:scale-105"
+                  className="p-4 rounded-lg border border-[var(--border)]/30 hover:border-[var(--accent)] hover:shadow-lg transition-all hover:scale-102 bg-white/50 dark:bg-gray-800/30"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="w-24 h-24 relative rounded-lg overflow-hidden flex-shrink-0 shadow-md">
+                  <div className="flex flex-col space-y-3">
+                    {/* Header avec nom et compteur */}
+                    <div className="flex items-center justify-between">
+                      <Link
+                        href={`/categorie/${category.slug}`}
+                        onClick={onClose}
+                        className="font-bold text-[var(--card-title)] text-xl hover:text-[var(--accent)] transition-colors"
+                      >
+                        {category.name}
+                      </Link>
+                      <span className="text-base bg-[var(--accent)]/20 text-[var(--accent)] px-3 py-1 rounded-full font-bold">
+                        {category.count}
+                      </span>
+                    </div>
+                    
+                    {/* Image */}
+                    <Link
+                      href={`/categorie/${category.slug}`}
+                      onClick={onClose}
+                      className="w-full h-40 relative rounded-lg overflow-hidden shadow-md block"
+                    >
                       <Image
                         src={category.image}
                         alt={category.name}
                         fill
                         className="object-cover hover:scale-110 transition-transform duration-300"
-                        sizes="96px"
+                        sizes="320px"
                         loading="lazy"
                         quality={85}
                         onError={(e) => {
@@ -296,64 +328,48 @@ export default function MegaMenu({ isOpen, onClose, onMouseEnter, onMouseLeave }
                           target.src = getCategoryPlaceholder(category.name);
                         }}
                       />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-bold text-[var(--card-title)] text-xl">
-                          {category.name}
-                        </h3>
-                        <span className="text-base bg-[var(--accent)]/20 text-[var(--accent)] px-3 py-1 rounded-full font-bold">
-                          {category.count}
-                        </span>
-                      </div>
-                      <p className="text-base text-[var(--foreground)] opacity-75 mt-2 leading-relaxed">
+                    </Link>
+                    
+                    {/* Contenu */}
+                    <div>
+                      <p className="text-sm text-[var(--foreground)] opacity-75 leading-relaxed">
                         {category.description}
                       </p>
+                      {category.products.length > 0 && (
+                        <div className="mt-3 pt-2 border-t border-[var(--border)]/30">
+                          <p className="text-xs font-medium text-[var(--card-title)] mb-1.5">Produits disponibles :</p>
+                          <div className="flex flex-wrap gap-1">
+                            {category.products.slice(0, 4).map((product) => (
+                              <Link
+                                key={product.id}
+                                href={`/produit/${product.id}`}
+                                onClick={onClose}
+                                className="text-xs bg-[var(--accent)]/10 text-[var(--accent)] px-2 py-0.5 rounded hover:bg-[var(--accent)]/20 transition-colors truncate max-w-[140px] block"
+                                title={product.name}
+                              >
+                                {product.name.length > 18 ? `${product.name.substring(0, 18)}...` : product.name}
+                              </Link>
+                            ))}
+                            {category.products.length > 4 && (
+                              <Link
+                                href={`/categorie/${category.slug}`}
+                                onClick={onClose}
+                                className="text-xs text-[var(--foreground)] opacity-60 px-2 py-0.5 hover:opacity-80 transition-opacity"
+                              >
+                                +{category.products.length - 4} autres
+                              </Link>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </Link>
+                </div>
               ))
             )}
           </div>
 
-          <div className="border-t border-[var(--border)] mt-8 pt-8 max-w-5xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex items-center gap-4 p-5 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                <span className="text-green-600 dark:text-green-400 text-3xl">🚚</span>
-                <div>
-                  <h4 className="font-bold text-green-800 dark:text-green-200 text-lg">
-                    Livraison 24H
-                  </h4>
-                  <p className="text-green-600 dark:text-green-300 text-base mt-1">
-                    Expédition rapide par transporteur spécialisé
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-4 p-5 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <span className="text-blue-600 dark:text-blue-400 text-3xl">👨‍🌾</span>
-                <div>
-                  <h4 className="font-bold text-blue-800 dark:text-blue-200 text-lg">
-                    Conseils d'experts
-                  </h4>
-                  <p className="text-blue-600 dark:text-blue-300 text-base mt-1">
-                    15+ années d'expérience à votre service
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <div className="text-center mt-8">
-            <Link
-              href="/qui-suis-je"
-              onClick={onClose}
-              className="inline-flex items-center gap-3 px-8 py-4 bg-[var(--accent)] text-white rounded-lg font-bold text-lg hover:opacity-90 transition-colors hover:scale-105"
-            >
-              <span className="text-xl">📞</span>
-              Nous contacter
-            </Link>
-          </div>
         </div>
       </div>
   );

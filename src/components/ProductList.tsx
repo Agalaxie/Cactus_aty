@@ -100,16 +100,9 @@ export default function ProductList({ limit, category }: ProductListProps) {
 
   return (
     <LazyMotionWrapper>
-      <div className="py-20 px-4 bg-[var(--background)]">
+      <div className="py-8 px-4 bg-[var(--background)]">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-[var(--card-title)] mb-4">
-              {category ? `Collection ${category}` : 'Nos Produits'}
-            </h2>
-            <div className="w-24 h-1 bg-[var(--accent)] mx-auto"></div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {products.map((product, index) => (
               <m.div
                 key={product.id}

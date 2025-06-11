@@ -200,7 +200,7 @@ export default function ProductPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Image */}
           <div className="space-y-4">
-            <div className="aspect-square rounded-2xl overflow-hidden border border-[var(--border)]">
+            <div className="sticky top-8 aspect-square rounded-2xl overflow-hidden border border-[var(--border)]">
               <Image
                 src={product.image_url || getPlaceholderImage()}
                 alt={product.name}
